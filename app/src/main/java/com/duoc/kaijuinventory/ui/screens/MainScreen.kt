@@ -1,40 +1,63 @@
-package com.duoc.kaijuinventory.ui.screens
+package com.duoc.kaijuinventory.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.duoc.kaijuinventory.screens.NotificacionesScreen
+import com.duoc.kaijuinventory.ui.screens.EscanerScreen
+import com.duoc.kaijuinventory.ui.screens.InventoryScreen
+import com.duoc.kaijuinventory.ui.screens.MovimientoScreen
+import com.duoc.kaijuinventory.ui.screens.ProductoFormScreen
 import com.duoc.kaijuinventory.viewmodel.InventoryViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val pestañas = listOf(
+    "📦" to "Inventario",
+    "➕" to "Agregar",
+    "🔄" to "Registro",
+    "🔔" to "Alertas",
+    "📷" to "Escáner"
+)
+
 @Composable
 fun MainScreen(viewModel: InventoryViewModel) {
-    // 0 = Pestaña Inventario, 1 = Pestaña Escáner (Cámara)
-    var selectedTab by remember { mutableStateOf(0) }
+    // Guardamos cuál pestaña está seleccionada
+    var pestañaSeleccionada by remember { mutableStateOf(0) }
 
     Scaffold(
         bottomBar = {
             NavigationBar {
-                NavigationBarItem(
-                    icon = { Text("📦") },
-                    label = { Text("Inventario") },
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 }
-                )
-                NavigationBarItem(
-                    icon = { Text("📷") },
-                    label = { Text("Escáner") },
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 }
-                )
+                pestañas.forEachIndexed { index, (icono, etiqueta) ->
+                    NavigationBarItem(
+                        selected = pestañaSeleccionada == index,
+                        onClick = { pestañaSeleccionada = index },
+                        icon = { Text(icono) },
+                        label = { Text(etiqueta) }
+                    )
+                }
             }
         }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            when (selectedTab) {
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding)) {
+            when (pestañaSeleccionada) {
                 0 -> InventoryScreen(viewModel = viewModel)
-                1 -> EscanerScreen()
+                1 -> ProductoFormScreen(
+                    onProductoGuardado = { producto ->
+                        viewModel.agregarProducto(producto)
+                        pestañaSeleccionada = 0
+                    }
+                )
+                2 -> MovimientoScreen(inventoryViewModel = viewModel)
+                3 -> NotificacionesScreen()
+                4 -> EscanerScreen()
             }
         }
     }
