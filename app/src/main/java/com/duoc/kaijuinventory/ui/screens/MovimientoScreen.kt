@@ -1,5 +1,12 @@
 package com.duoc.kaijuinventory.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +33,7 @@ import com.duoc.kaijuinventory.viewmodel.MovimientoFormViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 @Composable
 fun MovimientoScreen(
@@ -37,10 +45,27 @@ fun MovimientoScreen(
     val formState by formViewModel.state.collectAsState()
 
     var menuAbierto by remember { mutableStateOf(false) }
-    var mensajeExito by remember { mutableStateOf<String?>(null) }
+    var mostrarExito by remember { mutableStateOf(false) }
 
     val productoSeleccionado = productos.find { it.id == formState.productoId }
     val colorExito = Color(0xFF008000)
+
+    // El botón cambia de color según el tipo de movimiento elegido
+    val colorBoton by animateColorAsState(
+        targetValue = when (formState.tipo) {
+            TipoMovimiento.ENTRADA -> Color(0xFF008000)
+            TipoMovimiento.SALIDA -> Color(0xFFE65100)
+            TipoMovimiento.VENTA -> MaterialTheme.colorScheme.primary
+        },
+        animationSpec = tween(durationMillis = 400),
+        label = "colorBotonMovimiento"
+    )
+    LaunchedEffect(mostrarExito) {
+        if (mostrarExito) {
+            delay(3000)
+            mostrarExito = false
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -77,7 +102,7 @@ fun MovimientoScreen(
                                 onClick = {
                                     formViewModel.onProductoChange(producto.id)
                                     menuAbierto = false
-                                    mensajeExito = null
+                                    mostrarExito = false
                                 }
                             )
                         }
@@ -106,14 +131,14 @@ fun MovimientoScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.clickable {
                             formViewModel.onTipoChange(tipo)
-                            mensajeExito = null
+                            mostrarExito = false
                         }
                     ) {
                         RadioButton(
                             selected = formState.tipo == tipo,
                             onClick = {
                                 formViewModel.onTipoChange(tipo)
-                                mensajeExito = null
+                                mostrarExito = false
                             }
                         )
                         Text(tipo.etiqueta)
@@ -128,7 +153,7 @@ fun MovimientoScreen(
                 value = formState.cantidad,
                 onValueChange = {
                     formViewModel.onCantidadChange(it)
-                    mensajeExito = null
+                    mostrarExito = false
                 },
                 label = "Cantidad",
                 icono = Icons.Default.Add,
@@ -143,8 +168,9 @@ fun MovimientoScreen(
                     val registrado = formViewModel.registrar(productos) { id, tipo, cantidad ->
                         inventoryViewModel.registrarMovimiento(id, tipo, cantidad)
                     }
-                    if (registrado) mensajeExito = "Movimiento registrado correctamente"
+                    if (registrado) mostrarExito = true
                 },
+                colors = ButtonDefaults.buttonColors(containerColor = colorBoton),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.Check, contentDescription = null)
@@ -153,8 +179,13 @@ fun MovimientoScreen(
             }
         }
 
-        mensajeExito?.let { mensaje ->
-            item {
+        // Mensaje de éxito animado
+        item {
+            AnimatedVisibility(
+                visible = mostrarExito,
+                enter = fadeIn(animationSpec = tween(300)) + expandVertically(),
+                exit = fadeOut(animationSpec = tween(300)) + shrinkVertically()
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
@@ -162,7 +193,7 @@ fun MovimientoScreen(
                         tint = colorExito
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = mensaje, color = colorExito)
+                    Text(text = "Movimiento registrado correctamente", color = colorExito)
                 }
             }
         }

@@ -7,5 +7,6 @@ data class Producto(
     val stock: Int,
     val stockMinimo: Int,
     val precio: Double,
-    val codigoBarra: String = ""
+    val codigoBarra: String = "",
+    val fotoPath: String = ""
 )

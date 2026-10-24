@@ -1,88 +1,82 @@
-package com.duoc.kaijuinventory.screens
+package com.duoc.kaijuinventory.ui.screens
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
+import com.duoc.kaijuinventory.util.tienePermisoNotificaciones
+import com.duoc.kaijuinventory.viewmodel.InventoryViewModel
 
 @Composable
-fun NotificacionesScreen() {
+fun NotificacionesScreen(viewModel: InventoryViewModel) {
     val context = LocalContext.current
+    val productos by viewModel.productos.collectAsState()
     var permisoConcedido by remember { mutableStateOf(tienePermisoNotificaciones(context)) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted -> permisoConcedido = isGranted }
+    ) { concedido -> permisoConcedido = concedido }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+    // Productos que están en el stock mínimo o por debajo
+    val enAlerta = productos.filter { it.stock <= it.stockMinimo }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(text = "Notificaciones", style = MaterialTheme.typography.headlineSmall)
+        item {
+            Text(text = "Alertas de stock", style = MaterialTheme.typography.headlineSmall)
+        }
 
-        Text(
-            text = if (permisoConcedido) "✅ Permiso de notificaciones concedido"
-            else "⚠️ Permiso de notificaciones no concedido"
-        )
+        item {
+            Text(
+                text = if (permisoConcedido) {
+                    "Las notificaciones están activadas."
+                } else {
+                    "Las notificaciones están desactivadas."
+                }
+            )
+        }
 
         if (!permisoConcedido && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Button(onClick = { launcher.launch(Manifest.permission.POST_NOTIFICATIONS) }) {
-                Text("Solicitar permiso")
+            item {
+                Button(onClick = { launcher.launch(Manifest.permission.POST_NOTIFICATIONS) }) {
+                    Text("Activar notificaciones")
+                }
             }
         }
 
-        Button(
-            onClick = { enviarNotificacionStockBajo(context) },
-            enabled = permisoConcedido || Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-        ) {
-            Text("Probar alerta de stock bajo")
+        item {
+            Text(
+                text = "Productos en el stock mínimo o por debajo",
+                style = MaterialTheme.typography.titleMedium
+            )
         }
-    }
-}
 
-private fun tienePermisoNotificaciones(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(
-            context, Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
-    } else true
-}
-
-private fun enviarNotificacionStockBajo(context: Context) {
-    val channelId = "stock_bajo_channel"
-    val notificationManager =
-        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val channel = NotificationChannel(
-            channelId, "Alertas de Stock Bajo", NotificationManager.IMPORTANCE_HIGH
-        )
-        notificationManager.createNotificationChannel(channel)
-    }
-
-    val builder = NotificationCompat.Builder(context, channelId)
-        .setSmallIcon(android.R.drawable.ic_dialog_alert)
-        .setContentTitle("⚠️ Stock bajo")
-        .setContentText("Un producto está por debajo del stock mínimo.")
-        .setPriority(NotificationCompat.PRIORITY_HIGH)
-
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-        ContextCompat.checkSelfPermission(
-            context, Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
-    ) {
-        notificationManager.notify(1001, builder.build())
+        if (enAlerta.isEmpty()) {
+            item { Text("Todos los productos tienen stock suficiente.") }
+        } else {
+            items(enAlerta, key = { it.id }) { producto ->
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(text = producto.nombre, style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            text = "Stock: ${producto.stock} (mínimo ${producto.stockMinimo})",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+        }
     }
 }

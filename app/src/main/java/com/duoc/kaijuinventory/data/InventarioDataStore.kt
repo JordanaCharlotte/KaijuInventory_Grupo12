@@ -59,6 +59,7 @@ private fun productosAJson(lista: List<Producto>): String {
                 .put("stockMinimo", p.stockMinimo)
                 .put("precio", p.precio)
                 .put("codigoBarra", p.codigoBarra)
+                .put("fotoPath", p.fotoPath)
         )
     }
     return arreglo.toString()
@@ -75,7 +76,8 @@ private fun jsonAProductos(json: String): List<Producto> {
             stock = o.getInt("stock"),
             stockMinimo = o.optInt("stockMinimo", 5),
             precio = o.getDouble("precio"),
-            codigoBarra = o.optString("codigoBarra", "")
+            codigoBarra = o.optString("codigoBarra", ""),
+            fotoPath = o.optString("fotoPath", "")
         )
     }
 }

@@ -43,6 +43,10 @@ class ProductoFormViewModel : ViewModel() {
         }
     }
 
+    fun onFotoChange(ruta: String) {
+        _formState.update { it.copy(fotoPath = ruta) }
+    }
+
     // Valida todo el formulario; si es válido entrega el producto y limpia el formulario
     fun guardarProducto(onProductoGuardado: (Producto) -> Unit) {
         val estado = _formState.value
@@ -94,7 +98,8 @@ class ProductoFormViewModel : ViewModel() {
                 stock = stock,
                 stockMinimo = stockMinimo,
                 precio = precio,
-                codigoBarra = estado.codigoBarra
+                codigoBarra = estado.codigoBarra,
+                fotoPath = estado.fotoPath
             )
         )
         _formState.value = ProductoFormState()

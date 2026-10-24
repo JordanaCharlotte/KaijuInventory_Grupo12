@@ -8,6 +8,7 @@ import com.duoc.kaijuinventory.model.Movimiento
 import com.duoc.kaijuinventory.model.Producto
 import com.duoc.kaijuinventory.model.TipoMovimiento
 import com.duoc.kaijuinventory.repository.InventarioRepository
+import com.duoc.kaijuinventory.util.notificarStockBajo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -73,6 +74,12 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
 
         _productos.value = productosActualizados
         _movimientos.value = movimientosActualizados
+
+        // Recurso nativo: si el stock queda en el mínimo o bajo él, se avisa con una notificación
+        val actualizado = productosActualizados.first { it.id == productoId }
+        if (tipo != TipoMovimiento.ENTRADA && actualizado.stock <= actualizado.stockMinimo) {
+            notificarStockBajo(getApplication<Application>(), actualizado)
+        }
 
         viewModelScope.launch {
             repository.guardarProductos(productosActualizados)

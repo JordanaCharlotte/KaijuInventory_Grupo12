@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import com.duoc.kaijuinventory.navigation.AppNavigation
 import com.duoc.kaijuinventory.viewmodel.InventoryViewModel
-import com.duoc.kaijuinventory.screens.MainScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -14,8 +14,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainScreen(viewModel = inventoryViewModel)
-
+            AppNavigation(viewModel = inventoryViewModel)
         }
     }
 }

@@ -7,6 +7,7 @@ data class ProductoFormState(
     val stockMinimo: String = "",
     val precio: String = "",
     val codigoBarra: String = "",
+    val fotoPath: String = "",
 
     val nombreError: String? = null,
     val categoriaError: String? = null,
