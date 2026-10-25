@@ -84,9 +84,10 @@ fun AppNavigation(viewModel: InventoryViewModel) {
                         selected = rutaActual == pantalla.route ||
                             (enDetalle && pantalla == Screen.Inventario),
                         onClick = {
-                            // Desde el detalle, tocar Inventario solo vuelve atrás
-                            if (enDetalle && pantalla == Screen.Inventario) {
-                                navController.popBackStack()
+                            // Inventario es la pantalla de inicio: se vuelve a ella cerrando
+                            // lo que esté encima (por ejemplo un detalle abierto)
+                            if (pantalla == Screen.Inventario) {
+                                navController.popBackStack(Screen.Inventario.route, inclusive = false)
                             } else {
                                 navController.navegarA(pantalla.route)
                             }
@@ -129,7 +130,7 @@ fun AppNavigation(viewModel: InventoryViewModel) {
                     productosExistentes = productos,
                     onProductoGuardado = { producto ->
                         viewModel.agregarProducto(producto)
-                        navController.navegarA(Screen.Inventario.route)
+                        navController.popBackStack(Screen.Inventario.route, inclusive = false)
                         scope.launch {
                             snackbarHostState.showSnackbar("Producto \"${producto.nombre}\" guardado")
                         }
