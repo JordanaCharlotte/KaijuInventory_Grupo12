@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: café espresso en taza pequeña -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path android:fillColor="#FFE9D6" android:pathData="M0,0h100v100h-100z" />
+    <!-- vapor -->
+    <path android:strokeColor="#C9A48A" android:strokeWidth="2.5" android:strokeLineCap="round"
+        android:pathData="M42,38 q-4,-6 0,-12 q4,-6 0,-12" />
+    <path android:strokeColor="#C9A48A" android:strokeWidth="2.5" android:strokeLineCap="round"
+        android:pathData="M54,38 q-4,-6 0,-12 q4,-6 0,-12" />
+    <!-- plato -->
+    <path android:fillColor="#E8D5C4" android:pathData="M18,74 a32,7 0 1,0 64,0 a32,7 0 1,0 -64,0 z" />
+    <!-- asa -->
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="4.5"
+        android:pathData="M67,50 a7,7 0 0,1 0,14" />
+    <!-- taza -->
+    <path android:fillColor="#FFFFFF" android:strokeColor="#A1887F" android:strokeWidth="1.5"
+        android:pathData="M28,46 h40 v12 a20,16 0 0,1 -40,0 z" />
+    <!-- café -->
+    <path android:fillColor="#5D3A1A" android:pathData="M30,46 a18,4 0 1,0 36,0 a18,4 0 1,0 -36,0 z" />
+    <path android:fillColor="#8B5A2B" android:pathData="M38,46 a10,2 0 1,0 20,0 a10,2 0 1,0 -20,0 z" />
+</vector>

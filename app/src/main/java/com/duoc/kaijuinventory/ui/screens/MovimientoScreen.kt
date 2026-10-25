@@ -11,23 +11,29 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.duoc.kaijuinventory.model.Movimiento
 import com.duoc.kaijuinventory.model.TipoMovimiento
 import com.duoc.kaijuinventory.ui.components.CampoFormulario
+import com.duoc.kaijuinventory.ui.theme.ColorAdvertencia
+import com.duoc.kaijuinventory.ui.theme.ColorAdvertenciaSuave
+import com.duoc.kaijuinventory.ui.theme.ColorExito
+import com.duoc.kaijuinventory.ui.theme.ColorExitoSuave
 import com.duoc.kaijuinventory.viewmodel.InventoryViewModel
 import com.duoc.kaijuinventory.viewmodel.MovimientoFormViewModel
 import java.text.SimpleDateFormat
@@ -48,18 +54,18 @@ fun MovimientoScreen(
     var mostrarExito by remember { mutableStateOf(false) }
 
     val productoSeleccionado = productos.find { it.id == formState.productoId }
-    val colorExito = Color(0xFF008000)
 
     // El botón cambia de color según el tipo de movimiento elegido
     val colorBoton by animateColorAsState(
         targetValue = when (formState.tipo) {
-            TipoMovimiento.ENTRADA -> Color(0xFF008000)
-            TipoMovimiento.SALIDA -> Color(0xFFE65100)
+            TipoMovimiento.ENTRADA -> ColorExito
+            TipoMovimiento.SALIDA -> ColorAdvertencia
             TipoMovimiento.VENTA -> MaterialTheme.colorScheme.primary
         },
         animationSpec = tween(durationMillis = 400),
         label = "colorBotonMovimiento"
     )
+
     LaunchedEffect(mostrarExito) {
         if (mostrarExito) {
             delay(3000)
@@ -73,144 +79,175 @@ fun MovimientoScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text(text = "Registrar movimiento", style = MaterialTheme.typography.headlineSmall)
+            Column {
+                Text(text = "Registrar movimiento", style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    text = "Entradas, salidas y ventas actualizan el stock al instante",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
-        // Selector de producto
+        // Formulario dentro de una tarjeta
         item {
-            Column {
-                Box {
-                    OutlinedButton(
-                        onClick = { menuAbierto = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = productoSeleccionado?.nombre ?: "Seleccionar producto",
-                            modifier = Modifier.weight(1f)
-                        )
-                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Selector de producto
+                    Text(
+                        text = "Producto",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Box {
+                        OutlinedButton(
+                            onClick = { menuAbierto = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = productoSeleccionado?.nombre ?: "Seleccionar producto",
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                        }
+                        DropdownMenu(
+                            expanded = menuAbierto,
+                            onDismissRequest = { menuAbierto = false }
+                        ) {
+                            productos.forEach { producto ->
+                                DropdownMenuItem(
+                                    text = { Text("${producto.nombre} (stock: ${producto.stock})") },
+                                    onClick = {
+                                        formViewModel.onProductoChange(producto.id)
+                                        menuAbierto = false
+                                        mostrarExito = false
+                                    }
+                                )
+                            }
+                        }
                     }
-                    DropdownMenu(
-                        expanded = menuAbierto,
-                        onDismissRequest = { menuAbierto = false }
+                    formState.productoError?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
+
+                    // Tipo de movimiento
+                    Text(
+                        text = "Tipo de movimiento",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        productos.forEach { producto ->
-                            DropdownMenuItem(
-                                text = { Text("${producto.nombre} (stock: ${producto.stock})") },
-                                onClick = {
-                                    formViewModel.onProductoChange(producto.id)
-                                    menuAbierto = false
+                        TipoMovimiento.entries.forEach { tipo ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.clickable {
+                                    formViewModel.onTipoChange(tipo)
                                     mostrarExito = false
                                 }
-                            )
-                        }
-                    }
-                }
-                formState.productoError?.let {
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-                    )
-                }
-            }
-        }
-
-        // Tipo de movimiento
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TipoMovimiento.entries.forEach { tipo ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable {
-                            formViewModel.onTipoChange(tipo)
-                            mostrarExito = false
-                        }
-                    ) {
-                        RadioButton(
-                            selected = formState.tipo == tipo,
-                            onClick = {
-                                formViewModel.onTipoChange(tipo)
-                                mostrarExito = false
+                            ) {
+                                RadioButton(
+                                    selected = formState.tipo == tipo,
+                                    onClick = {
+                                        formViewModel.onTipoChange(tipo)
+                                        mostrarExito = false
+                                    }
+                                )
+                                Text(tipo.etiqueta)
                             }
-                        )
-                        Text(tipo.etiqueta)
+                        }
                     }
-                }
-            }
-        }
 
-        // Cantidad
-        item {
-            CampoFormulario(
-                value = formState.cantidad,
-                onValueChange = {
-                    formViewModel.onCantidadChange(it)
-                    mostrarExito = false
-                },
-                label = "Cantidad",
-                icono = Icons.Default.Add,
-                error = formState.cantidadError,
-                keyboardType = KeyboardType.Number
-            )
-        }
-
-        item {
-            Button(
-                onClick = {
-                    val registrado = formViewModel.registrar(productos) { id, tipo, cantidad ->
-                        inventoryViewModel.registrarMovimiento(id, tipo, cantidad)
-                    }
-                    if (registrado) mostrarExito = true
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = colorBoton),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Check, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Registrar movimiento")
-            }
-        }
-
-        // Mensaje de éxito animado
-        item {
-            AnimatedVisibility(
-                visible = mostrarExito,
-                enter = fadeIn(animationSpec = tween(300)) + expandVertically(),
-                exit = fadeOut(animationSpec = tween(300)) + shrinkVertically()
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
-                        tint = colorExito
+                    // Cantidad
+                    CampoFormulario(
+                        value = formState.cantidad,
+                        onValueChange = {
+                            formViewModel.onCantidadChange(it)
+                            mostrarExito = false
+                        },
+                        label = "Cantidad",
+                        icono = Icons.Default.Add,
+                        error = formState.cantidadError,
+                        keyboardType = KeyboardType.Number
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Movimiento registrado correctamente", color = colorExito)
+
+                    Button(
+                        onClick = {
+                            val registrado = formViewModel.registrar(productos) { id, tipo, cantidad ->
+                                inventoryViewModel.registrarMovimiento(id, tipo, cantidad)
+                            }
+                            if (registrado) mostrarExito = true
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = colorBoton),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Registrar ${formState.tipo.etiqueta.lowercase()}")
+                    }
+
+                    // Mensaje de éxito animado
+                    AnimatedVisibility(
+                        visible = mostrarExito,
+                        enter = fadeIn(animationSpec = tween(300)) + expandVertically(),
+                        exit = fadeOut(animationSpec = tween(300)) + shrinkVertically()
+                    ) {
+                        Surface(
+                            color = ColorExitoSuave,
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = ColorExito
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = "Movimiento registrado correctamente", color = ColorExito)
+                            }
+                        }
+                    }
                 }
             }
         }
 
         item {
-            HorizontalDivider()
-        }
-
-        item {
-            Text(text = "Historial de movimientos", style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = "Historial de movimientos",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
 
         if (movimientos.isEmpty()) {
             item {
                 Text(
                     text = "Aún no hay movimientos registrados.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else {
@@ -223,22 +260,61 @@ fun MovimientoScreen(
 
 @Composable
 private fun MovimientoItem(movimiento: Movimiento) {
+    val esEntrada = movimiento.tipo == TipoMovimiento.ENTRADA
+
     val color = when (movimiento.tipo) {
-        TipoMovimiento.ENTRADA -> Color(0xFF008000)
-        TipoMovimiento.SALIDA -> Color(0xFFE65100)
+        TipoMovimiento.ENTRADA -> ColorExito
+        TipoMovimiento.SALIDA -> ColorAdvertencia
         TipoMovimiento.VENTA -> MaterialTheme.colorScheme.primary
     }
+    val fondo = when (movimiento.tipo) {
+        TipoMovimiento.ENTRADA -> ColorExitoSuave
+        TipoMovimiento.SALIDA -> ColorAdvertenciaSuave
+        TipoMovimiento.VENTA -> MaterialTheme.colorScheme.primaryContainer
+    }
+    val icono = when (movimiento.tipo) {
+        TipoMovimiento.ENTRADA -> Icons.Default.KeyboardArrowUp
+        TipoMovimiento.SALIDA -> Icons.Default.KeyboardArrowDown
+        TipoMovimiento.VENTA -> Icons.Default.ShoppingCart
+    }
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Círculo con el ícono del tipo de movimiento
+            Surface(
+                color = fondo,
+                shape = CircleShape,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icono, contentDescription = movimiento.tipo.etiqueta, tint = color)
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = movimiento.productoNombre,
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    text = "${movimiento.tipo.etiqueta} · ${formatearFecha(movimiento.fecha)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             Text(
-                text = "${movimiento.tipo.etiqueta}: ${movimiento.cantidad} u. de ${movimiento.productoNombre}",
-                style = MaterialTheme.typography.titleSmall,
+                text = if (esEntrada) "+${movimiento.cantidad}" else "-${movimiento.cantidad}",
+                style = MaterialTheme.typography.titleMedium,
                 color = color
-            )
-            Text(
-                text = formatearFecha(movimiento.fecha),
-                style = MaterialTheme.typography.bodySmall
             )
         }
     }

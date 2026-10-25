@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: café latte en vaso alto con capas -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path android:fillColor="#E3ECFF" android:pathData="M0,0h100v100h-100z" />
+    <!-- bombilla -->
+    <path android:strokeColor="#E57373" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M58,12 L53,40" />
+    <!-- vaso -->
+    <path android:fillColor="#FFFFFF" android:strokeColor="#90A4AE" android:strokeWidth="1.5"
+        android:pathData="M36,24 L64,24 L61,82 L39,82 Z" />
+    <!-- espuma -->
+    <path android:fillColor="#FFF8E7" android:pathData="M36.3,30 L63.7,30 L62.9,44 L37.1,44 Z" />
+    <!-- café -->
+    <path android:fillColor="#A1673A" android:pathData="M37.1,44 L62.9,44 L62,62 L38,62 Z" />
+    <!-- leche -->
+    <path android:fillColor="#E8C9A6" android:pathData="M38,62 L62,62 L61.2,79 L38.8,79 Z" />
+    <!-- canela -->
+    <path android:fillColor="#B07A4F" android:pathData="M44,34 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0 z" />
+    <path android:fillColor="#B07A4F" android:pathData="M52,37 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0 z" />
+    <path android:fillColor="#B07A4F" android:pathData="M48,40 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0 z" />
+</vector>

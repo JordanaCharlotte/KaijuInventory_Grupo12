@@ -3,6 +3,7 @@ package com.duoc.kaijuinventory.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -17,6 +18,11 @@ sealed class Screen(val route: String, val etiqueta: String, val icono: ImageVec
     data object Registro : Screen("registro_page", "Registro", Icons.Default.Refresh)
 
     data object Alertas : Screen("alertas_page", "Alertas", Icons.Default.Notifications)
+
+    // Pantalla de detalle: no va en la barra inferior, se abre al tocar un producto
+    data object Detalle : Screen("detalle_page/{productoId}", "Detalle", Icons.Default.Info) {
+        fun crearRuta(productoId: Int) = "detalle_page/$productoId"
+    }
 
     companion object {
         // Destinos que aparecen en la barra de navegación inferior

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -38,9 +39,20 @@ fun CampoFormulario(
             }
         } else null,
         isError = error != null,
-        supportingText = { error?.let { Text(it) } },
+        // el mensaje solo ocupa espacio cuando hay un error
+        supportingText = if (error != null) {
+            { Text(error) }
+        } else null,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         singleLine = true,
+        shape = MaterialTheme.shapes.small,
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = MaterialTheme.colorScheme.background,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            focusedLeadingIconColor = MaterialTheme.colorScheme.primary
+        ),
         modifier = Modifier.fillMaxWidth()
     )
 }

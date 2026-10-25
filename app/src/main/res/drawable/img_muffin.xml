@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: muffin de arándano -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path android:fillColor="#F1E8FF" android:pathData="M0,0h100v100h-100z" />
+    <!-- capacillo -->
+    <path android:fillColor="#EF9A9A" android:pathData="M28,56 L72,56 L66,82 L34,82 Z" />
+    <path android:strokeColor="#E57373" android:strokeWidth="2"
+        android:pathData="M37,56 L39,82 M46,56 L47,82 M54,56 L53,82 M63,56 L61,82" />
+    <!-- masa -->
+    <path android:fillColor="#D7A86E" android:pathData="M24,58 C24,30 76,30 76,58 Z" />
+    <path android:fillColor="#E6BE8A" android:pathData="M34,46 C38,38 50,36 56,40 C48,40 40,43 34,46 Z" />
+    <!-- arándanos -->
+    <path android:fillColor="#5E35B1" android:pathData="M36.5,50 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path android:fillColor="#5E35B1" android:pathData="M48.5,44 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path android:fillColor="#5E35B1" android:pathData="M57.5,51 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path android:fillColor="#4527A0" android:pathData="M45.5,53 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 z" />
+</vector>
