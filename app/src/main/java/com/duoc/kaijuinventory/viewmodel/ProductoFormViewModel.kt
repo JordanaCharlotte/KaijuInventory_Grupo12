@@ -48,7 +48,11 @@ class ProductoFormViewModel : ViewModel() {
     }
 
     // Valida todo el formulario; si es válido entrega el producto y limpia el formulario
-    fun guardarProducto(onProductoGuardado: (Producto) -> Unit) {
+    // codigosExistentes: códigos de barra que ya están en el inventario, para no repetirlos
+    fun guardarProducto(
+        codigosExistentes: List<String>,
+        onProductoGuardado: (Producto) -> Unit
+    ) {
         val estado = _formState.value
 
         val nombreError = when {
@@ -67,10 +71,12 @@ class ProductoFormViewModel : ViewModel() {
         val precio = estado.precio.toDoubleOrNull()
         val precioError = if (precio == null || precio <= 0) "Ingresa un precio mayor a 0" else null
 
-        val codigoBarraError =
-            if (estado.codigoBarra.isNotBlank() && estado.codigoBarra.length < 6) {
-                "Debe tener al menos 6 dígitos"
-            } else null
+        val codigoBarraError = when {
+            estado.codigoBarra.isBlank() -> null
+            estado.codigoBarra.length < 6 -> "Debe tener al menos 6 dígitos"
+            estado.codigoBarra in codigosExistentes -> "Este código ya pertenece a otro producto"
+            else -> null
+        }
 
         _formState.update {
             it.copy(
