@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: cappuccino con arte latte en forma de corazón -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path android:fillColor="#E4F3E8" android:pathData="M0,0h100v100h-100z" />
+    <!-- plato -->
+    <path android:fillColor="#FFFFFF" android:strokeColor="#BCAAA4" android:strokeWidth="1"
+        android:pathData="M14,76 a36,7 0 1,0 72,0 a36,7 0 1,0 -72,0 z" />
+    <!-- asa -->
+    <path android:strokeColor="#D7CCC8" android:strokeWidth="5"
+        android:pathData="M77,48 a8,8 0 0,1 0,16" />
+    <!-- taza -->
+    <path android:fillColor="#FFFFFF" android:strokeColor="#A1887F" android:strokeWidth="1.5"
+        android:pathData="M22,44 h56 v6 a28,22 0 0,1 -56,0 z" />
+    <!-- crema -->
+    <path android:fillColor="#C68B59" android:pathData="M24,44 a26,6 0 1,0 52,0 a26,6 0 1,0 -52,0 z" />
+    <!-- corazón de espuma -->
+    <path android:fillColor="#FFF3E0"
+        android:pathData="M50,48 c-6,-3.5 -8,-5.5 -6,-7.5 c1.5,-1.5 4,-1 6,1.5 c2,-2.5 4.5,-3 6,-1.5 c2,2 0,4 -6,7.5 z" />
+</vector>
