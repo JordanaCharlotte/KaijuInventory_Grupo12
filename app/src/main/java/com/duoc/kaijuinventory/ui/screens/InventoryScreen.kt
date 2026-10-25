@@ -12,7 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import com.duoc.kaijuinventory.ui.theme.ColorAdvertencia
+import com.duoc.kaijuinventory.ui.theme.ColorExito
 import androidx.compose.ui.unit.dp
 import com.duoc.kaijuinventory.model.Producto
 import com.duoc.kaijuinventory.ui.components.ImagenInteligente
@@ -67,9 +68,9 @@ fun ProductoItem(producto: Producto) {
     val stockBajo = !sinStock && producto.stock <= producto.stockMinimo
 
     val colorEstado = when {
-        sinStock -> Color.Red
-        stockBajo -> Color(0xFFE65100)
-        else -> Color(0xFF008000)
+        sinStock -> MaterialTheme.colorScheme.error
+        stockBajo -> ColorAdvertencia
+        else -> ColorExito
     }
     val textoEstado = when {
         sinStock -> "Sin stock"

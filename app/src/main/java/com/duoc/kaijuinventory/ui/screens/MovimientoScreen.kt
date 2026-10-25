@@ -21,7 +21,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import com.duoc.kaijuinventory.ui.theme.ColorAdvertencia
+import com.duoc.kaijuinventory.ui.theme.ColorExito
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,13 +49,13 @@ fun MovimientoScreen(
     var mostrarExito by remember { mutableStateOf(false) }
 
     val productoSeleccionado = productos.find { it.id == formState.productoId }
-    val colorExito = Color(0xFF008000)
+    val colorExito = ColorExito
 
     // El botón cambia de color según el tipo de movimiento elegido
     val colorBoton by animateColorAsState(
         targetValue = when (formState.tipo) {
-            TipoMovimiento.ENTRADA -> Color(0xFF008000)
-            TipoMovimiento.SALIDA -> Color(0xFFE65100)
+            TipoMovimiento.ENTRADA -> ColorExito
+            TipoMovimiento.SALIDA -> ColorAdvertencia
             TipoMovimiento.VENTA -> MaterialTheme.colorScheme.primary
         },
         animationSpec = tween(durationMillis = 400),
@@ -224,8 +225,8 @@ fun MovimientoScreen(
 @Composable
 private fun MovimientoItem(movimiento: Movimiento) {
     val color = when (movimiento.tipo) {
-        TipoMovimiento.ENTRADA -> Color(0xFF008000)
-        TipoMovimiento.SALIDA -> Color(0xFFE65100)
+        TipoMovimiento.ENTRADA -> ColorExito
+        TipoMovimiento.SALIDA -> ColorAdvertencia
         TipoMovimiento.VENTA -> MaterialTheme.colorScheme.primary
     }
 
