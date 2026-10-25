@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.KaijuInventory" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.KaijuInventory" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Colores de la barra de estado y del fondo mientras carga la app -->
+        <item name="android:statusBarColor">#FF0B2A63</item>
+        <item name="android:windowBackground">@color/fondo_kaiju</item>
+    </style>
 </resources>
