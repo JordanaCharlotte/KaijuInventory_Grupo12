@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: galleta con chips de chocolate -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="100dp"
+    android:viewportWidth="100" android:viewportHeight="100">
+    <path android:fillColor="#FBE9E7" android:pathData="M0,0h100v100h-100z" />
+    <path android:fillColor="#D7A86E" android:strokeColor="#B98450" android:strokeWidth="1.5"
+        android:pathData="M22,50 a28,28 0 1,0 56,0 a28,28 0 1,0 -56,0 z" />
+    <path android:fillColor="#5D4037" android:pathData="M36,40 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path android:fillColor="#5D4037" android:pathData="M54,36 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 z" />
+    <path android:fillColor="#5D4037" android:pathData="M60,54 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 z" />
+    <path android:fillColor="#5D4037" android:pathData="M42,58 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 z" />
+    <path android:fillColor="#5D4037" android:pathData="M30,52 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 z" />
+    <path android:fillColor="#5D4037" android:pathData="M50,66 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 z" />
+</vector>

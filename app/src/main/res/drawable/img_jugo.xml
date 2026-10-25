@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: vaso de jugo de naranja -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="100dp"
+    android:viewportWidth="100" android:viewportHeight="100">
+    <path android:fillColor="#FFF3E0" android:pathData="M0,0h100v100h-100z" />
+    <path android:fillColor="#FFFFFF" android:strokeColor="#FFCC80" android:strokeWidth="1.5"
+        android:pathData="M34,22 L66,22 L62,84 L38,84 Z" />
+    <path android:fillColor="#FFA726" android:pathData="M35,34 L65,34 L62.2,81 L37.8,81 Z" />
+    <path android:fillColor="#FFB74D" android:pathData="M35,34 L65,34 L64.6,40 L35.4,40 Z" />
+    <!-- rodaja de naranja en el borde -->
+    <path android:fillColor="#FB8C00" android:pathData="M58,24 a12,12 0 1,1 24,0 z" />
+    <path android:fillColor="#FFE0B2" android:pathData="M61,24 a9,9 0 1,1 18,0 z" />
+    <path android:strokeColor="#FB8C00" android:strokeWidth="1" android:pathData="M70,24 L70,15 M70,24 L64,18 M70,24 L76,18" />
+    <!-- bombilla -->
+    <path android:strokeColor="#42A5F5" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M44,10 L48,60" />
+</vector>

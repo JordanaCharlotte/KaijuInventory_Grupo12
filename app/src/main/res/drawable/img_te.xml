@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: taza de té con bolsita -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="100dp"
+    android:viewportWidth="100" android:viewportHeight="100">
+    <path android:fillColor="#E6F4EA" android:pathData="M0,0h100v100h-100z" />
+    <path android:fillColor="#FFFFFF" android:strokeColor="#A5D6A7" android:strokeWidth="1"
+        android:pathData="M16,76 a34,7 0 1,0 68,0 a34,7 0 1,0 -68,0 z" />
+    <path android:strokeColor="#C8E6C9" android:strokeWidth="5"
+        android:pathData="M73,48 a8,8 0 0,1 0,16" />
+    <path android:fillColor="#FFFFFF" android:strokeColor="#81C784" android:strokeWidth="1.5"
+        android:pathData="M26,42 h48 v10 a24,20 0 0,1 -48,0 z" />
+    <path android:fillColor="#9CCC65" android:pathData="M28,42 a22,5 0 1,0 44,0 a22,5 0 1,0 -44,0 z" />
+    <!-- hilo y etiqueta de la bolsita -->
+    <path android:strokeColor="#795548" android:strokeWidth="1.2" android:pathData="M50,42 L60,22" />
+    <path android:fillColor="#FFB74D" android:pathData="M56,14 h12 v10 h-12 z" />
+</vector>

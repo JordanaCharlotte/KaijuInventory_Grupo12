@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: croissant -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="100dp"
+    android:viewportWidth="100" android:viewportHeight="100">
+    <path android:fillColor="#FFF8E1" android:pathData="M0,0h100v100h-100z" />
+    <path android:fillColor="#EFE5D2" android:pathData="M18,74 a32,6 0 1,0 64,0 a32,6 0 1,0 -64,0 z" />
+    <!-- puntas -->
+    <path android:fillColor="#C98A3D" android:pathData="M12,66 C14,54 24,48 32,52 L30,66 Z" />
+    <path android:fillColor="#C98A3D" android:pathData="M88,66 C86,54 76,48 68,52 L70,66 Z" />
+    <!-- capas -->
+    <path android:fillColor="#D99A4E" android:pathData="M26,68 C24,52 32,44 40,46 L42,68 Z" />
+    <path android:fillColor="#D99A4E" android:pathData="M74,68 C76,52 68,44 60,46 L58,68 Z" />
+    <path android:fillColor="#E8B06A" android:pathData="M38,70 C36,46 64,46 62,70 Z" />
+    <path android:strokeColor="#B97A30" android:strokeWidth="1.5"
+        android:pathData="M42,52 C46,56 54,56 58,52 M40,60 C46,64 54,64 60,60" />
+</vector>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ilustración propia: sándwich de jamón y queso -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="100dp"
+    android:viewportWidth="100" android:viewportHeight="100">
+    <path android:fillColor="#ECEFF1" android:pathData="M0,0h100v100h-100z" />
+    <!-- pan de abajo -->
+    <path android:fillColor="#E0B577" android:pathData="M18,64 h64 v8 a4,4 0 0,1 -4,4 h-56 a4,4 0 0,1 -4,-4 z" />
+    <!-- lechuga -->
+    <path android:fillColor="#7CB342"
+        android:pathData="M16,60 q6,6 12,0 q6,6 12,0 q6,6 12,0 q6,6 12,0 q6,6 12,0 q6,6 8,2 v4 h-68 z" />
+    <!-- jamón -->
+    <path android:fillColor="#F48FB1" android:pathData="M18,52 h64 v8 h-64 z" />
+    <!-- queso -->
+    <path android:fillColor="#FFD54F" android:pathData="M16,46 h68 l-6,8 h-56 z" />
+    <!-- pan de arriba -->
+    <path android:fillColor="#E8C08A" android:pathData="M18,46 C18,30 82,30 82,46 Z" />
+    <path android:fillColor="#F3D6A8" android:pathData="M30,38 a2,1.2 0 1,0 4,0 a2,1.2 0 1,0 -4,0 z M48,35 a2,1.2 0 1,0 4,0 a2,1.2 0 1,0 -4,0 z M64,38 a2,1.2 0 1,0 4,0 a2,1.2 0 1,0 -4,0 z" />
+</vector>
