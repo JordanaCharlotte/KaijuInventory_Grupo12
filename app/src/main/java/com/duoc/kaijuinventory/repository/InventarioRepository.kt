@@ -1,45 +1,93 @@
 package com.duoc.kaijuinventory.repository
 
 import com.duoc.kaijuinventory.data.InventarioDataStore
+import com.duoc.kaijuinventory.data.remote.BackendCliente
+import com.duoc.kaijuinventory.data.remote.MovimientoDto
+import com.duoc.kaijuinventory.data.remote.MovimientoRequestDto
+import com.duoc.kaijuinventory.data.remote.MovimientosApi
+import com.duoc.kaijuinventory.data.remote.ProductoDto
+import com.duoc.kaijuinventory.data.remote.ProductosApi
 import com.duoc.kaijuinventory.model.Movimiento
 import com.duoc.kaijuinventory.model.Producto
+import com.duoc.kaijuinventory.model.TipoMovimiento
 import kotlinx.coroutines.flow.first
+import java.time.LocalDateTime
+import java.time.ZoneId
 
-class InventarioRepository(private val dataStore: InventarioDataStore) {
+// Fuente de datos de la app:
+// - Los datos reales viven en los microservicios (ms-productos y ms-movimientos).
+// - DataStore guarda una copia local para mostrar algo si no hay conexión.
+class InventarioRepository(
+    private val dataStore: InventarioDataStore,
+    private val productosApi: ProductosApi = BackendCliente.productosApi,
+    private val movimientosApi: MovimientosApi = BackendCliente.movimientosApi
+) {
 
-    // Si no hay datos guardados (primera ejecución), carga el catálogo ficticio inicial
-    suspend fun obtenerProductos(): List<Producto> {
-        val guardados = dataStore.productos.first()
-        if (guardados != null) return guardados
+    // ---------- Datos remotos (microservicios) ----------
 
-        val iniciales = productosIniciales()
-        dataStore.guardarProductos(iniciales)
-        return iniciales
+    // GET /api/productos. Las fotos solo existen en el teléfono, así que se recuperan de la copia local.
+    suspend fun obtenerProductosRemotos(): List<Producto> {
+        val fotos = obtenerProductosLocales().associate { it.id to it.fotoPath }
+        return productosApi.listar().map { dto -> dto.aProducto(fotos[dto.id?.toInt()] ?: "") }
     }
 
-    suspend fun obtenerMovimientos(): List<Movimiento> = dataStore.movimientos.first()
+    // GET /api/movimientos
+    suspend fun obtenerMovimientosRemotos(): List<Movimiento> =
+        movimientosApi.listar().map { it.aMovimiento() }
 
-    suspend fun guardarProductos(lista: List<Producto>) = dataStore.guardarProductos(lista)
+    // GET /api/productos/{id}: se usa para traer el stock actualizado después de un movimiento
+    suspend fun obtenerProductoRemoto(id: Int, fotoPath: String): Producto =
+        productosApi.buscar(id.toLong()).aProducto(fotoPath)
 
-    suspend fun guardarMovimientos(lista: List<Movimiento>) = dataStore.guardarMovimientos(lista)
+    // POST /api/productos. Devuelve el producto con el id que le asignó la base de datos.
+    suspend fun crearProducto(producto: Producto): Producto =
+        productosApi.crear(producto.aDto()).aProducto(producto.fotoPath)
 
-    // Catálogo ficticio inicial (datos inventados para el trabajo)
-    private fun productosIniciales(): List<Producto> = listOf(
-        // Bebidas calientes
-        Producto(id = 1, nombre = "Café Espresso", categoria = "Bebidas Calientes", stock = 20, stockMinimo = 5, precio = 2200.0, codigoBarra = "780001"),
-        Producto(id = 2, nombre = "Café Latte", categoria = "Bebidas Calientes", stock = 12, stockMinimo = 5, precio = 2800.0, codigoBarra = "780002"),
-        Producto(id = 3, nombre = "Cappuccino", categoria = "Bebidas Calientes", stock = 5, stockMinimo = 5, precio = 3000.0, codigoBarra = "780003"),
-        Producto(id = 4, nombre = "Té Verde", categoria = "Bebidas Calientes", stock = 25, stockMinimo = 8, precio = 1900.0, codigoBarra = "780004"),
-        Producto(id = 5, nombre = "Chocolate Caliente", categoria = "Bebidas Calientes", stock = 9, stockMinimo = 5, precio = 2900.0, codigoBarra = "780005"),
-        // Bebidas frías
-        Producto(id = 6, nombre = "Jugo de Naranja", categoria = "Bebidas Frías", stock = 10, stockMinimo = 6, precio = 2500.0, codigoBarra = "780006"),
-        Producto(id = 7, nombre = "Café Helado", categoria = "Bebidas Frías", stock = 3, stockMinimo = 5, precio = 3200.0, codigoBarra = "780007"),
-        // Repostería
-        Producto(id = 8, nombre = "Muffin de Arándano", categoria = "Repostería", stock = 0, stockMinimo = 3, precio = 1800.0, codigoBarra = "780008"),
-        Producto(id = 9, nombre = "Muffin de Chocolate", categoria = "Repostería", stock = 7, stockMinimo = 3, precio = 1800.0, codigoBarra = "780009"),
-        Producto(id = 10, nombre = "Croissant de Mantequilla", categoria = "Repostería", stock = 15, stockMinimo = 5, precio = 1600.0, codigoBarra = "780010"),
-        Producto(id = 11, nombre = "Galleta con Chips", categoria = "Repostería", stock = 30, stockMinimo = 10, precio = 900.0, codigoBarra = "780011"),
-        // Salados
-        Producto(id = 12, nombre = "Sándwich Jamón Queso", categoria = "Salados", stock = 0, stockMinimo = 4, precio = 3500.0, codigoBarra = "780012")
-    )
+    // POST /api/movimientos. El backend valida el stock y lo actualiza en ms-productos.
+    suspend fun registrarMovimiento(productoId: Int, tipo: TipoMovimiento, cantidad: Int): Movimiento =
+        movimientosApi.registrar(MovimientoRequestDto(productoId.toLong(), tipo.name, cantidad)).aMovimiento()
+
+    // ---------- Copia local (DataStore) ----------
+
+    suspend fun obtenerProductosLocales(): List<Producto> = dataStore.productos.first() ?: emptyList()
+
+    suspend fun obtenerMovimientosLocales(): List<Movimiento> = dataStore.movimientos.first()
+
+    suspend fun guardarCopiaLocal(productos: List<Producto>, movimientos: List<Movimiento>) {
+        dataStore.guardarProductos(productos)
+        dataStore.guardarMovimientos(movimientos)
+    }
 }
+
+// ---------- Conversiones entre los objetos del backend y los de la app ----------
+
+private fun ProductoDto.aProducto(fotoPath: String) = Producto(
+    id = (id ?: 0L).toInt(),
+    nombre = nombre,
+    categoria = categoria,
+    stock = stock,
+    stockMinimo = stockMinimo,
+    precio = precio,
+    codigoBarra = codigoBarra ?: "",
+    fotoPath = fotoPath
+)
+
+private fun Producto.aDto() = ProductoDto(
+    id = null, // el id lo genera el backend
+    nombre = nombre,
+    categoria = categoria,
+    precio = precio,
+    stock = stock,
+    stockMinimo = stockMinimo,
+    codigoBarra = codigoBarra.ifBlank { null }
+)
+
+private fun MovimientoDto.aMovimiento() = Movimiento(
+    id = id.toInt(),
+    productoId = productoId.toInt(),
+    productoNombre = productoNombre,
+    tipo = TipoMovimiento.valueOf(tipo),
+    cantidad = cantidad,
+    // El backend envía la fecha como texto; la app la guarda en milisegundos
+    fecha = LocalDateTime.parse(fecha).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+)

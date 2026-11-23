@@ -41,6 +41,8 @@ fun InventoryScreen(
 ) {
     val productos by viewModel.productos.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
+    val sinConexion by viewModel.sinConexion.collectAsState()
+    val mensajeConexion by viewModel.mensajeConexion.collectAsState()
 
     var busqueda by remember { mutableStateOf("") }
     var categoriaElegida by remember { mutableStateOf("Todas") }
@@ -88,6 +90,31 @@ fun InventoryScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                }
+
+                // Aviso cuando no se pudo conectar con los microservicios
+                if (sinConexion) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Sin conexión con el servidor",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                                Text(
+                                    text = "$mensajeConexion Se muestran los últimos datos guardados.",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                TextButton(onClick = { viewModel.cargarDatos() }) {
+                                    Text("Reintentar")
+                                }
+                            }
+                        }
                     }
                 }
 
