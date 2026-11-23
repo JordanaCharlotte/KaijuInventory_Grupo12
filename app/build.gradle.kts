@@ -1,6 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+// Datos para firmar el APK: se leen de keystore.properties (en la raíz del proyecto).
+// Ese archivo tiene las contraseñas y NO se sube a GitHub (está en .gitignore).
+val archivoFirma = rootProject.file("keystore.properties")
+val datosFirma = Properties()
+if (archivoFirma.exists()) {
+    archivoFirma.inputStream().use { datosFirma.load(it) }
 }
 
 android {
@@ -19,8 +29,22 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Configuración de la firma del APK de release
+    signingConfigs {
+        create("release") {
+            if (archivoFirma.exists()) {
+                storeFile = rootProject.file(datosFirma.getProperty("storeFile"))
+                storePassword = datosFirma.getProperty("storePassword")
+                keyAlias = datosFirma.getProperty("keyAlias")
+                keyPassword = datosFirma.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // El APK de release se firma con nuestro keystore (.jks)
+            signingConfig = signingConfigs.getByName("release")
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
