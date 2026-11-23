@@ -1,4 +1,6 @@
 [versions]
+retrofit = "3.0.0"
+coroutinesTest = "1.10.2"
 agp = "9.4.1"
 coreKtx = "1.19.1"
 junit = "4.13.2"
@@ -10,6 +12,9 @@ kotlin = "2.2.10"
 composeBom = "2026.02.01"
 
 [libraries]
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
