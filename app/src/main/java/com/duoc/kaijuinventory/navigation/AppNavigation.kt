@@ -33,7 +33,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.duoc.kaijuinventory.ui.screens.InventoryScreen
+import com.duoc.kaijuinventory.ui.screens.LoginScreen
+import com.duoc.kaijuinventory.viewmodel.LoginViewModel
 import com.duoc.kaijuinventory.ui.screens.MovimientoScreen
 import com.duoc.kaijuinventory.ui.screens.NotificacionesScreen
 import com.duoc.kaijuinventory.ui.screens.ProductoDetalleScreen
@@ -49,6 +58,26 @@ fun AppNavigation(viewModel: InventoryViewModel) {
     val rutaActual = backStackEntry?.destination?.route
     val productos by viewModel.productos.collectAsState()
     val enDetalle = rutaActual == Screen.Detalle.route
+    val enLogin = rutaActual == Screen.Login.route
+
+    // Sesión: se lee de DataStore al abrir la app
+    val loginViewModel: LoginViewModel = viewModel()
+    val sesionCargada by loginViewModel.sesionCargada.collectAsState()
+    val usuario by loginViewModel.usuario.collectAsState()
+
+    // Mientras se revisa si hay una sesión guardada, se muestra un indicador de carga
+    if (!sesionCargada) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    // Si ya había sesión se entra directo al inventario; si no, al login.
+    // Se calcula una sola vez para que la navegación no se reinicie.
+    val destinoInicial = remember {
+        if (usuario != null) Screen.Inventario.route else Screen.Login.route
+    }
 
     // Para mostrar mensajes cortos abajo de la pantalla (Snackbar)
     val snackbarHostState = remember { SnackbarHostState() }
@@ -56,8 +85,35 @@ fun AppNavigation(viewModel: InventoryViewModel) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(if (enDetalle) "Detalle del producto" else "Kaiju Inventory") },
+            // En la pantalla de login no se muestran la barra superior ni la inferior
+            if (!enLogin) TopAppBar(
+                title = {
+                    Column {
+                        Text(if (enDetalle) "Detalle del producto" else "Kaiju Inventory")
+                        usuario?.let {
+                            Text(
+                                text = "${it.nombre} · ${it.rolLegible}",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        loginViewModel.cerrarSesion {
+                            // Vuelve al login borrando todas las pantallas anteriores
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                            }
+                        }
+                    }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "Cerrar sesión",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                },
                 // En el detalle aparece la flecha para volver al inventario
                 navigationIcon = {
                     if (enDetalle) {
@@ -77,7 +133,7 @@ fun AppNavigation(viewModel: InventoryViewModel) {
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+            if (!enLogin) NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 Screen.items.forEach { pantalla ->
                     NavigationBarItem(
                         // Si estamos en el detalle, se marca la pestaña Inventario
@@ -107,11 +163,22 @@ fun AppNavigation(viewModel: InventoryViewModel) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Inventario.route,
+            startDestination = destinoInicial,
             modifier = Modifier.padding(innerPadding),
             enterTransition = { fadeIn(animationSpec = tween(300)) },
             exitTransition = { fadeOut(animationSpec = tween(300)) }
         ) {
+            composable(Screen.Login.route) {
+                LoginScreen(
+                    viewModel = loginViewModel,
+                    alIngresar = {
+                        // Entra al inventario y saca el login de la pila (el botón atrás no vuelve al login)
+                        navController.navigate(Screen.Inventario.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(Screen.Inventario.route) {
                 InventoryScreen(
                     viewModel = viewModel,
@@ -129,10 +196,16 @@ fun AppNavigation(viewModel: InventoryViewModel) {
                 ProductoFormScreen(
                     productosExistentes = productos,
                     onProductoGuardado = { producto ->
-                        viewModel.agregarProducto(producto)
-                        navController.popBackStack(Screen.Inventario.route, inclusive = false)
-                        scope.launch {
-                            snackbarHostState.showSnackbar("Producto \"${producto.nombre}\" guardado")
+                        // Se envía a ms-productos y se espera la respuesta del servidor
+                        viewModel.agregarProducto(producto) { error ->
+                            if (error == null) {
+                                navController.popBackStack(Screen.Inventario.route, inclusive = false)
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Producto \"${producto.nombre}\" guardado en el servidor")
+                                }
+                            } else {
+                                scope.launch { snackbarHostState.showSnackbar(error) }
+                            }
                         }
                     }
                 )
