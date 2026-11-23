@@ -15,3 +15,6 @@
 local.properties
 
 .kotlin/
+
+# Contraseñas de la firma del APK (nunca se suben)
+keystore.properties
