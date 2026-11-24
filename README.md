@@ -74,7 +74,16 @@ Carpetas dentro de `app/src/main/java/com/duoc/kaijuinventory/`:
 | vendedor@kaiju.cl | vendedor123 | Vendedor |
 | inventario@kaiju.cl | inventario123 | Encargado de inventario |
 
-El emulador llega al PC con la IP `10.0.2.2`. Para usar un **celular real**, cambiar `IP_SERVIDOR` en `data/remote/BackendCliente.kt` por la IP del PC en la red Wi-Fi (el celular y el PC deben estar en la misma red).
+La app se conecta a `127.0.0.1` (`IP_SERVIDOR` en `data/remote/BackendCliente.kt`). Para que el emulador llegue a los microservicios del PC, con el emulador encendido se ejecuta una vez (y de nuevo cada vez que se reinicia el emulador):
+
+```powershell
+$adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+& $adb reverse tcp:8081 tcp:8081
+& $adb reverse tcp:8082 tcp:8082
+& $adb reverse tcp:8083 tcp:8083
+```
+
+Sin `adb reverse`, en el emulador se puede usar la IP `10.0.2.2`. Para usar un **celular real**, cambiar `IP_SERVIDOR` por la IP del PC en la red Wi-Fi (el celular y el PC deben estar en la misma red).
 
 ## Pruebas unitarias
 

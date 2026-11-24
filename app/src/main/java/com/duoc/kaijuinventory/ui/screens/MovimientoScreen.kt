@@ -152,28 +152,35 @@ fun MovimientoScreen(
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.primary
                     )
+                    // Cada tipo es un chip con su color: verde entrada, naranja salida, azul venta
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         TipoMovimiento.entries.forEach { tipo ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.clickable {
+                            val colorTipo = when (tipo) {
+                                TipoMovimiento.ENTRADA -> ColorExito
+                                TipoMovimiento.SALIDA -> ColorAdvertencia
+                                TipoMovimiento.VENTA -> MaterialTheme.colorScheme.primary
+                            }
+                            val seleccionado = formState.tipo == tipo
+                            FilterChip(
+                                selected = seleccionado,
+                                onClick = {
                                     formViewModel.onTipoChange(tipo)
                                     mostrarExito = false
-                                }
-                            ) {
-                                RadioButton(
-                                    selected = formState.tipo == tipo,
-                                    onClick = {
-                                        formViewModel.onTipoChange(tipo)
-                                        mostrarExito = false
-                                    }
-                                )
-                                Text(tipo.etiqueta)
-                            }
+                                },
+                                label = { Text(tipo.etiqueta) },
+                                leadingIcon = if (seleccionado) {
+                                    { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                                } else null,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = colorTipo,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
 
