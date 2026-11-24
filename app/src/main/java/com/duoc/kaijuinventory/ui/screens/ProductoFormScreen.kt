@@ -11,9 +11,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -30,6 +30,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.duoc.kaijuinventory.model.Producto
+import com.duoc.kaijuinventory.repository.ProductoExternoRepository
+import com.duoc.kaijuinventory.repository.ResultadoBusqueda
 import com.duoc.kaijuinventory.ui.components.CampoFormulario
 import com.duoc.kaijuinventory.ui.components.DialogoPermiso
 import com.duoc.kaijuinventory.ui.components.ImagenInteligente
@@ -37,6 +39,7 @@ import com.duoc.kaijuinventory.util.copiarImagenALocal
 import com.duoc.kaijuinventory.util.crearArchivoFoto
 import com.duoc.kaijuinventory.util.imagenDeReferencia
 import com.duoc.kaijuinventory.viewmodel.ProductoFormViewModel
+import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
@@ -47,43 +50,73 @@ fun ProductoFormScreen(
 ) {
     val formState by viewModel.formState.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    // Ruta del archivo donde la cámara va a guardar la foto
-    var rutaCamara by rememberSaveable { mutableStateOf<String?>(null) }
-    var mostrarDialogoCamara by remember { mutableStateOf(false) }
+    val productoExternoRepository = remember {
+        ProductoExternoRepository()
+    }
 
-    // Galería: el usuario elige una imagen que ya existe
+    var rutaCamara by rememberSaveable {
+        mutableStateOf<String?>(null)
+    }
+
+    var mostrarDialogoCamara by remember {
+        mutableStateOf(false)
+    }
+
+    var buscandoProducto by remember {
+        mutableStateOf(false)
+    }
+
+    var mensajeBusqueda by remember {
+        mutableStateOf<String?>(null)
+    }
+
     val galeriaLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         if (uri != null) {
             val ruta = copiarImagenALocal(context, uri)
+
             if (ruta != null) {
                 viewModel.onFotoChange(ruta)
             } else {
-                Toast.makeText(context, "No se pudo cargar la imagen", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "No se pudo cargar la imagen",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
-    // Cámara: toma una foto nueva. Si el usuario cancela, se borra el archivo vacío
     val camaraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { exito ->
         val ruta = rutaCamara
+
         if (ruta != null) {
-            if (exito) viewModel.onFotoChange(ruta) else File(ruta).delete()
+            if (exito) {
+                viewModel.onFotoChange(ruta)
+            } else {
+                File(ruta).delete()
+            }
         }
     }
 
     fun abrirCamara() {
         val archivo = crearArchivoFoto(context)
         rutaCamara = archivo.absolutePath
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", archivo)
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            archivo
+        )
+
         camaraLauncher.launch(uri)
     }
 
-    // Permiso de cámara en tiempo de ejecución
     val permisoCamaraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { concedido ->
@@ -104,8 +137,44 @@ fun ProductoFormScreen(
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
 
-        // Si no hay permiso, primero se explica en español para qué se usa la cámara
-        if (tienePermiso) abrirCamara() else mostrarDialogoCamara = true
+        if (tienePermiso) {
+            abrirCamara()
+        } else {
+            mostrarDialogoCamara = true
+        }
+    }
+
+    fun buscarProductoExterno() {
+        scope.launch {
+            buscandoProducto = true
+            mensajeBusqueda = null
+
+            when (
+                val resultado = productoExternoRepository.buscarPorCodigo(
+                    formState.codigoBarra
+                )
+            ) {
+                is ResultadoBusqueda.Encontrado -> {
+                    viewModel.onNombreChange(resultado.producto.nombre)
+                    mensajeBusqueda = "Producto encontrado"
+                }
+
+                ResultadoBusqueda.NoEncontrado -> {
+                    mensajeBusqueda = "No se encontró un producto con ese código"
+                }
+
+                ResultadoBusqueda.CodigoInvalido -> {
+                    mensajeBusqueda =
+                        "El código debe tener entre 6 y 20 dígitos"
+                }
+
+                is ResultadoBusqueda.Error -> {
+                    mensajeBusqueda = resultado.mensaje
+                }
+            }
+
+            buscandoProducto = false
+        }
     }
 
     if (mostrarDialogoCamara) {
@@ -113,12 +182,14 @@ fun ProductoFormScreen(
             icono = Icons.Default.Info,
             titulo = "Usar la cámara",
             mensaje = "Kaiju Inventory necesita la cámara solo para tomar la foto del producto. " +
-                "La foto se guarda en el teléfono y no se comparte.",
+                    "La foto se guarda en el teléfono y no se comparte.",
             onAceptar = {
                 mostrarDialogoCamara = false
                 permisoCamaraLauncher.launch(Manifest.permission.CAMERA)
             },
-            onCancelar = { mostrarDialogoCamara = false }
+            onCancelar = {
+                mostrarDialogoCamara = false
+            }
         )
     }
 
@@ -130,7 +201,11 @@ fun ProductoFormScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column {
-            Text(text = "Agregar producto", style = MaterialTheme.typography.headlineSmall)
+            Text(
+                text = "Agregar producto",
+                style = MaterialTheme.typography.headlineSmall
+            )
+
             Text(
                 text = "Completa los datos para sumarlo al inventario",
                 style = MaterialTheme.typography.bodyMedium,
@@ -138,30 +213,42 @@ fun ProductoFormScreen(
             )
         }
 
-        // Sección 1: foto del producto
         SeccionFormulario(titulo = "Foto del producto") {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Mientras no haya foto, se muestra la imagen de referencia según lo que se escribe
                 ImagenInteligente(
                     fotoPath = formState.fotoPath,
-                    imagenReferencia = imagenDeReferencia(formState.nombre, formState.categoria)
+                    imagenReferencia = imagenDeReferencia(
+                        formState.nombre,
+                        formState.categoria
+                    )
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { galeriaLauncher.launch("image/*") }) {
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            galeriaLauncher.launch("image/*")
+                        }
+                    ) {
                         Text("Galería")
                     }
-                    Button(onClick = { alPresionarCamara() }) {
+
+                    Button(
+                        onClick = {
+                            alPresionarCamara()
+                        }
+                    ) {
                         Text("Tomar foto")
                     }
                 }
             }
         }
 
-        // Sección 2: datos generales
         SeccionFormulario(titulo = "Datos del producto") {
             CampoFormulario(
                 value = formState.nombre,
@@ -170,6 +257,7 @@ fun ProductoFormScreen(
                 icono = Icons.Default.Edit,
                 error = formState.nombreError
             )
+
             CampoFormulario(
                 value = formState.categoria,
                 onValueChange = viewModel::onCategoriaChange,
@@ -177,6 +265,7 @@ fun ProductoFormScreen(
                 icono = Icons.Default.Menu,
                 error = formState.categoriaError
             )
+
             CampoFormulario(
                 value = formState.precio,
                 onValueChange = viewModel::onPrecioChange,
@@ -185,17 +274,65 @@ fun ProductoFormScreen(
                 error = formState.precioError,
                 keyboardType = KeyboardType.Decimal
             )
+
             CampoFormulario(
                 value = formState.codigoBarra,
-                onValueChange = viewModel::onCodigoBarraChange,
+                onValueChange = {
+                    viewModel.onCodigoBarraChange(it)
+                    mensajeBusqueda = null
+                },
                 label = "Código de barra (opcional)",
                 icono = Icons.Default.Search,
                 error = formState.codigoBarraError,
                 keyboardType = KeyboardType.Number
             )
+
+            Button(
+                onClick = {
+                    buscarProductoExterno()
+                },
+                enabled = !buscandoProducto &&
+                        formState.codigoBarra.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (buscandoProducto) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = null
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = if (buscandoProducto) {
+                        "Buscando..."
+                    } else {
+                        "Buscar producto por código"
+                    }
+                )
+            }
+
+            if (mensajeBusqueda != null) {
+                Text(
+                    text = mensajeBusqueda!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (
+                        mensajeBusqueda == "Producto encontrado"
+                    ) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    }
+                )
+            }
         }
 
-        // Sección 3: datos de inventario
         SeccionFormulario(titulo = "Inventario") {
             CampoFormulario(
                 value = formState.stock,
@@ -205,6 +342,7 @@ fun ProductoFormScreen(
                 error = formState.stockError,
                 keyboardType = KeyboardType.Number
             )
+
             CampoFormulario(
                 value = formState.stockMinimo,
                 onValueChange = viewModel::onStockMinimoChange,
@@ -213,6 +351,7 @@ fun ProductoFormScreen(
                 error = formState.stockMinimoError,
                 keyboardType = KeyboardType.Number
             )
+
             Text(
                 text = "Cuando el stock llegue al mínimo, la app enviará una alerta.",
                 style = MaterialTheme.typography.bodySmall,
@@ -222,21 +361,30 @@ fun ProductoFormScreen(
 
         Button(
             onClick = {
-                val codigos = productosExistentes.map { it.codigoBarra }.filter { it.isNotBlank() }
-                viewModel.guardarProducto(codigos) { producto -> onProductoGuardado(producto) }
+                val codigos = productosExistentes
+                    .map { it.codigoBarra }
+                    .filter { it.isNotBlank() }
+
+                viewModel.guardarProducto(codigos) { producto ->
+                    onProductoGuardado(producto)
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
         ) {
-            Icon(Icons.Default.Check, contentDescription = null)
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = null
+            )
+
             Spacer(modifier = Modifier.width(8.dp))
+
             Text("Guardar producto")
         }
     }
 }
 
-// Tarjeta con título para agrupar los campos del formulario
 @Composable
 private fun SeccionFormulario(
     titulo: String,
@@ -244,8 +392,12 @@ private fun SeccionFormulario(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -257,6 +409,7 @@ private fun SeccionFormulario(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
+
             contenido()
         }
     }

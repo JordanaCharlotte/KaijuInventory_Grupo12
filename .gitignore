@@ -19,3 +19,5 @@ local.properties
 # Contraseñas de la firma del APK (nunca se suben)
 keystore/*.jks
 keystore.properties
+Kaiju_Backend/
+Kaiju_Backend/
