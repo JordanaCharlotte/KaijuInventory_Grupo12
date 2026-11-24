@@ -8,9 +8,15 @@ import java.util.concurrent.TimeUnit
 // Configuración de Retrofit para los microservicios propios.
 object BackendCliente {
 
-    // 10.0.2.2 es la dirección con la que el EMULADOR llega al PC donde corren los microservicios.
+    // 127.0.0.1 funciona en el emulador gracias a "adb reverse", que redirige los puertos
+    // 8081, 8082 y 8083 del emulador al PC donde corren los microservicios.
+    // Antes de abrir la app (y cada vez que se reinicia el emulador) hay que ejecutar:
+    //   adb reverse tcp:8081 tcp:8081
+    //   adb reverse tcp:8082 tcp:8082
+    //   adb reverse tcp:8083 tcp:8083
+    // Sin adb reverse, en el emulador se puede usar "10.0.2.2".
     // Para un celular real, cambiar por la IP del PC en la red Wi-Fi (ejemplo: "192.168.1.15").
-    const val IP_SERVIDOR = "10.0.2.2"
+    const val IP_SERVIDOR = "127.0.0.1"
 
     // Si el backend está apagado, se espera máximo 5 segundos en vez de 10
     private val clienteHttp = OkHttpClient.Builder()

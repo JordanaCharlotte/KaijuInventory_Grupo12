@@ -9,4 +9,9 @@ data class Usuario(
     // "ENCARGADO_INVENTARIO" -> "Encargado inventario"
     val rolLegible: String
         get() = rol.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+
+    // "Administrador Kaiju" -> "AK" (se muestra en el círculo de la barra superior)
+    val iniciales: String
+        get() = nombre.split(" ").filter { it.isNotBlank() }.take(2)
+            .joinToString("") { it.first().uppercase() }
 }

@@ -11,6 +11,7 @@ import com.duoc.kaijuinventory.model.LoginFormState
 import com.duoc.kaijuinventory.model.Usuario
 import com.duoc.kaijuinventory.util.validarCorreo
 import com.duoc.kaijuinventory.util.validarPassword
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,6 +41,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     init {
         viewModelScope.launch {
             _usuario.value = sesion.usuario.first()
+            delay(1200) // para que alcance a verse la pantalla de bienvenida
             _sesionCargada.value = true
         }
     }

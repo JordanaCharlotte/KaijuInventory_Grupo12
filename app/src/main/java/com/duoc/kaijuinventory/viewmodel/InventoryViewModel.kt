@@ -22,7 +22,6 @@ class InventoryViewModel(
 ) : AndroidViewModel(application) {
 
     private val database = KaijuDatabase.obtenerBaseDeDatos(application)
-
     private val repository = InventarioRepository(database)
 
     private val _productos = MutableStateFlow<List<Producto>>(emptyList())
@@ -33,6 +32,9 @@ class InventoryViewModel(
 
     private val _cargando = MutableStateFlow(true)
     val cargando: StateFlow<Boolean> = _cargando.asStateFlow()
+
+    private val _actualizando = MutableStateFlow(false)
+    val actualizando: StateFlow<Boolean> = _actualizando.asStateFlow()
 
     private val _sinConexion = MutableStateFlow(false)
     val sinConexion: StateFlow<Boolean> = _sinConexion.asStateFlow()
@@ -53,8 +55,8 @@ class InventoryViewModel(
                 _movimientos.value = repository.obtenerMovimientosRemotos()
 
                 repository.guardarCopiaLocal(
-                    productos = _productos.value,
-                    movimientos = _movimientos.value
+                    _productos.value,
+                    _movimientos.value
                 )
 
                 _sinConexion.value = false
@@ -66,6 +68,31 @@ class InventoryViewModel(
             }
 
             _cargando.value = false
+        }
+    }
+
+    fun actualizar() {
+        viewModelScope.launch {
+            _actualizando.value = true
+
+            try {
+                _productos.value = repository.obtenerProductosRemotos()
+                _movimientos.value = repository.obtenerMovimientosRemotos()
+
+                repository.guardarCopiaLocal(
+                    _productos.value,
+                    _movimientos.value
+                )
+
+                _sinConexion.value = false
+                _mensajeConexion.value = ""
+            } catch (e: IOException) {
+                usarCopiaLocal(e)
+            } catch (e: HttpException) {
+                usarCopiaLocal(e)
+            }
+
+            _actualizando.value = false
         }
     }
 
@@ -83,12 +110,11 @@ class InventoryViewModel(
         viewModelScope.launch {
             try {
                 val creado = repository.crearProducto(producto)
-
                 _productos.value = _productos.value + creado
 
                 repository.guardarCopiaLocal(
-                    productos = _productos.value,
-                    movimientos = _movimientos.value
+                    _productos.value,
+                    _movimientos.value
                 )
 
                 alTerminar(null)
@@ -118,14 +144,14 @@ class InventoryViewModel(
         viewModelScope.launch {
             try {
                 val movimiento = repository.registrarMovimiento(
-                    productoId = productoId,
-                    tipo = tipo,
-                    cantidad = cantidad
+                    productoId,
+                    tipo,
+                    cantidad
                 )
 
                 val actualizado = repository.obtenerProductoRemoto(
-                    id = productoId,
-                    fotoPath = producto.fotoPath
+                    productoId,
+                    producto.fotoPath
                 )
 
                 _productos.value = _productos.value.map {
@@ -136,8 +162,8 @@ class InventoryViewModel(
                     listOf(movimiento) + _movimientos.value
 
                 repository.guardarCopiaLocal(
-                    productos = _productos.value,
-                    movimientos = _movimientos.value
+                    _productos.value,
+                    _movimientos.value
                 )
 
                 if (
