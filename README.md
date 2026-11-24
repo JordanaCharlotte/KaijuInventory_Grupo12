@@ -1,114 +1,424 @@
 # Kaiju Inventory
 
-App Android para la gestión y trazabilidad del inventario de **Kaiju**.
-Desarrollo de Aplicaciones Móviles (DSY1105) · Duoc UC San Bernardo.
+Aplicación Android para la gestión y trazabilidad del inventario de Kaiju.
 
-**Integrantes:** Jordana Vásquez y Davis Monsalvez (Grupo 12)
+Proyecto desarrollado para la asignatura **Desarrollo de Aplicaciones Móviles (DSY1105)** de Duoc UC, sede San Bernardo.
+
+**Integrantes:** Jordana Vásquez y Davis Monsalvez  
+**Grupo:** 12
 
 ## Repositorios del proyecto
 
-| Repositorio | Contenido |
-|---|---|
-| [KaijuInventory_Grupo12](https://github.com/JordanaCharlotte/KaijuInventory_Grupo12) | App Android (este repositorio) |
-| [Kaiju_Backend](https://github.com/JordanaCharlotte/Kaiju_Backend) | Microservicios Spring Boot: ms-usuarios, ms-productos y ms-movimientos |
+- [Repositorio Android: KaijuInventory_Grupo12](https://github.com/JordanaCharlotte/KaijuInventory_Grupo12 )
+- [Repositorio backend: Kaiju_Backend](https://github.com/JordanaCharlotte/Kaiju_Backend )
 
-## De qué trata
+El repositorio Android contiene la aplicación móvil. El repositorio `Kaiju_Backend` contiene los tres microservicios Spring Boot utilizados por la aplicación.
 
-Kaiju lleva su inventario a mano, y eso hace que el stock anotado casi nunca coincida con el real: se olvidan entradas o salidas y nadie se entera cuando un producto se está acabando. Con la app se puede ver el stock de cada producto, registrar lo que entra y lo que sale, y saber a tiempo qué hay que reponer.
+## Descripción del proyecto
 
-Todos los datos que usa la app son ficticios, como exige el caso.
+Kaiju administra su inventario de forma manual, lo que puede provocar diferencias entre el stock registrado y el stock real. También pueden olvidarse entradas, salidas o ventas, y no siempre se detecta a tiempo cuándo un producto necesita reposición.
 
-## Funcionalidades
+Kaiju Inventory permite consultar el inventario, registrar productos, controlar entradas y salidas, registrar ventas y recibir alertas cuando el stock está bajo.
 
-- **Inicio de sesión** contra el microservicio `ms-usuarios`, con validación por campo, sesión recordada y botón para cerrar sesión.
-- **Inventario** con resumen del stock (disponibles, stock bajo y sin stock), buscador que no distingue tildes y filtro por categoría.
-- **Detalle de producto** con su stock, totales de entradas, salidas y ventas, e historial de movimientos (trazabilidad).
-- **Agregar productos** con un formulario que valida cada campo (incluido el código de barra repetido) y se guarda en `ms-productos`.
-- **Registrar entradas, salidas y ventas** en `ms-movimientos`, que valida el stock y lo actualiza en `ms-productos`.
-- **Alertas** con los productos por reponer y **notificación** cuando un producto llega a su stock mínimo.
-- **Foto del producto** con la cámara o la galería; si no tiene, muestra una imagen de referencia según el tipo de producto.
-- **Sin conexión**: si los microservicios no responden, muestra la última copia guardada en el teléfono y un botón "Reintentar".
-- **API externa Open Food Facts** para buscar datos de un producto por su código de barras.
-- Tema propio con la paleta de Kaiju, modo oscuro y animaciones (transiciones, barras de stock, mensajes).
+Los datos utilizados en el proyecto son ficticios.
 
-## Arquitectura
+## Funcionalidades principales
 
-Kotlin + Jetpack Compose + Material 3, con el patrón **MVVM**. Las pantallas solo muestran el estado; la lógica y las validaciones están en los ViewModels.
+- Inicio de sesión mediante el microservicio `ms-usuarios`.
+- Validación de correo y contraseña.
+- Sesión recordada y opción para cerrar sesión.
+- Visualización del inventario.
+- Resumen de productos disponibles, con stock bajo y sin stock.
+- Búsqueda de productos.
+- Filtro por categoría.
+- Visualización del detalle de cada producto.
+- Registro del historial de movimientos.
+- Agregar productos con formulario validado.
+- Validación de nombre, categoría, precio, stock, stock mínimo y código de barras.
+- Validación para evitar precios y cantidades excesivamente altos.
+- Validación para evitar ventas superiores al stock disponible.
+- Registro de entradas, salidas y ventas.
+- Actualización del stock después de registrar movimientos.
+- Alertas de productos con stock bajo.
+- Notificación cuando un producto llega a su stock mínimo.
+- Agregar fotografías mediante cámara o galería.
+- Imagen de referencia cuando el producto no tiene fotografía.
+- Persistencia local de los productos y movimientos mediante Room.
+- Persistencia de la sesión mediante DataStore.
+- Recuperación de la última información guardada cuando el backend no está disponible.
+- Botón para reintentar la conexión con los microservicios.
+- Consumo de la API externa Open Food Facts.
+- Búsqueda de productos mediante código de barras.
+- Carga automática del nombre del producto desde Open Food Facts.
+- Tema visual propio de Kaiju.
+- Modo oscuro, animaciones y componentes desarrollados con Material 3.
 
+## Tecnologías utilizadas
+
+- Kotlin.
+- Jetpack Compose.
+- Material 3.
+- Arquitectura MVVM.
+- ViewModel.
+- StateFlow.
+- Room.
+- SQLite.
+- DataStore.
+- Retrofit.
+- Gson.
+- Spring Boot.
+- Microservicios.
+- H2.
+- Open Food Facts.
+- JUnit y pruebas unitarias.
+
+## Arquitectura de la aplicación
+
+La aplicación utiliza una arquitectura MVVM.
+
+```text
+Pantallas Compose
+        |
+        v
+ViewModel
+        |
+        v
+Repository
+        |
+        +--> Room / SQLite
+        |
+        +--> Retrofit / Microservicios Spring Boot
+        |
+        +--> Retrofit / Open Food Facts
+        |
+        +--> DataStore para la sesión
 ```
-Pantallas (ui/screens)  ──►  ViewModels (viewmodel)  ──►  Repositorios (repository)
-                                                              │
-                         ┌────────────────────────────────────┼──────────────────────┐
-                         ▼                                    ▼                      ▼
-              Microservicios propios                 API externa             Copia local
-              (Retrofit, data/remote)             Open Food Facts           (DataStore)
-              8083 usuarios · 8081 productos       (Retrofit, aparte)
-              8082 movimientos
+
+Las pantallas muestran el estado de la aplicación. Los ViewModels contienen el estado y las validaciones. Los repositorios se encargan de conectar la aplicación con Room, los microservicios propios y la API externa.
+
+## Persistencia local con Room
+
+La información principal del inventario se almacena localmente mediante Room sobre SQLite.
+
+Room se utiliza para guardar:
+
+- Productos.
+- Movimientos.
+- Stock actualizado.
+- Historial de operaciones.
+
+La aplicación utiliza:
+
+- Entidades Room.
+- DAO para consultar y modificar información.
+- Una base de datos Room.
+- Un repositorio que coordina la información local y remota.
+
+DataStore se mantiene para guardar la sesión del usuario.
+
+## Microservicios del backend
+
+La aplicación se conecta a tres microservicios Spring Boot:
+
+| Microservicio | Función | Puerto |
+|---|---|---:|
+| `ms-usuarios` | Login y usuarios | `8083` |
+| `ms-productos` | Productos e inventario | `8081` |
+| `ms-movimientos` | Entradas, salidas y ventas | `8082` |
+
+El backend se encuentra en un repositorio separado:
+
+[Repositorio Kaiju_Backend](https://github.com/JordanaCharlotte/Kaiju_Backend )
+
+## Endpoints principales
+
+### Microservicio de usuarios
+
+```text
+POST /api/auth/login
+GET  /api/usuarios
+POST /api/usuarios
 ```
 
-Carpetas dentro de `app/src/main/java/com/duoc/kaijuinventory/`:
+### Microservicio de productos
 
-| Carpeta | Contenido |
-|---|---|
-| `ui/screens` | Pantallas: login, inventario, detalle, agregar, registro y alertas |
-| `ui/components` | Componentes reutilizables (campo de formulario, imagen, diálogo de permisos) |
-| `ui/theme` | Colores, tipografía y formas de Kaiju |
-| `viewmodel` | Estado de cada pantalla y validaciones |
-| `repository` | Conecta los ViewModels con el backend, la API externa y DataStore |
-| `data/remote` | Interfaces Retrofit, DTOs y configuración de los clientes HTTP |
-| `data` | DataStore (copia local y sesión) |
-| `model` | Clases de datos de la app |
-| `navigation` | Rutas y navegación entre pantallas |
-| `util` | Funciones de apoyo: validaciones, texto, imágenes y notificaciones |
+```text
+GET    /api/productos
+GET    /api/productos/{id}
+GET    /api/productos/stock-bajo
+POST   /api/productos
+PUT    /api/productos/{id}
+DELETE /api/productos/{id}
+PATCH  /api/productos/{id}/stock
+```
 
-## Cómo ejecutarlo
+### Microservicio de movimientos
 
-1. Encender los tres microservicios de [Kaiju_Backend](https://github.com/JordanaCharlotte/Kaiju_Backend) (ver su README).
-2. Abrir este proyecto en Android Studio y esperar el Sync de Gradle.
-3. Ejecutar en un emulador con Android 11 (API 30) o superior.
-4. Iniciar sesión con un usuario de prueba:
+```text
+GET  /api/movimientos
+GET  /api/movimientos/{id}
+GET  /api/movimientos/producto/{productoId}
+POST /api/movimientos
+```
+
+## Usuarios de prueba
 
 | Correo | Contraseña | Rol |
 |---|---|---|
-| admin@kaiju.cl | admin123 | Administrador |
-| vendedor@kaiju.cl | vendedor123 | Vendedor |
-| inventario@kaiju.cl | inventario123 | Encargado de inventario |
+| `admin@kaiju.cl` | `admin123` | Administrador |
+| `vendedor@kaiju.cl` | `vendedor123` | Vendedor |
+| `inventario@kaiju.cl` | `inventario123` | Encargado de inventario |
 
-La app se conecta a `127.0.0.1` (`IP_SERVIDOR` en `data/remote/BackendCliente.kt`). Para que el emulador llegue a los microservicios del PC, con el emulador encendido se ejecuta una vez (y de nuevo cada vez que se reinicia el emulador):
+## Cómo ejecutar el backend
+
+Primero se debe clonar o descargar el repositorio:
+
+```text
+https://github.com/JordanaCharlotte/Kaiju_Backend
+```
+
+Luego se debe iniciar cada microservicio en una terminal separada.
+
+### Ejecutar productos
+
+```powershell
+cd ms-productos
+.\mvnw.cmd spring-boot:run
+```
+
+### Ejecutar movimientos
+
+```powershell
+cd ms-movimientos
+.\mvnw.cmd spring-boot:run
+```
+
+### Ejecutar usuarios
+
+```powershell
+cd ms-usuarios
+.\mvnw.cmd spring-boot:run
+```
+
+Los tres servicios deben quedar ejecutándose al mismo tiempo.
+
+El backend utiliza Spring Boot y una base de datos H2.
+
+## Cómo ejecutar la aplicación Android
+
+1. Abrir el proyecto en Android Studio.
+2. Esperar a que termine la sincronización de Gradle.
+3. Encender los microservicios del backend.
+4. Ejecutar la aplicación en un emulador o dispositivo físico.
+5. Iniciar sesión con uno de los usuarios de prueba.
+
+### Uso con emulador Android
+
+Para el emulador se puede utilizar:
+
+```kotlin
+const val IP_SERVIDOR = "10.0.2.2"
+```
+
+El emulador utiliza `10.0.2.2` para acceder al computador donde se ejecuta el backend.
+
+Otra alternativa es utilizar `127.0.0.1` junto con `adb reverse`:
 
 ```powershell
 $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+
 & $adb reverse tcp:8081 tcp:8081
 & $adb reverse tcp:8082 tcp:8082
 & $adb reverse tcp:8083 tcp:8083
 ```
 
-Sin `adb reverse`, en el emulador se puede usar la IP `10.0.2.2`. Para usar un **celular real**, cambiar `IP_SERVIDOR` por la IP del PC en la red Wi-Fi (el celular y el PC deben estar en la misma red).
+Estos comandos deben ejecutarse con el emulador encendido.
 
-## Pruebas unitarias
+### Uso con un celular físico
+
+El celular y el computador deben estar conectados a la misma red Wi-Fi.
+
+En `BackendCliente.kt` se debe utilizar la dirección IPv4 local del computador:
+
+```kotlin
+const val IP_SERVIDOR = "192.168.1.13"
+```
+
+La dirección puede cambiar dependiendo de la red. Se puede consultar en Windows con:
+
+```powershell
+ipconfig
+```
+
+No se debe utilizar la IP pública de Internet. Se debe utilizar la IPv4 local del computador conectado a la misma red Wi-Fi que el teléfono.
+
+## API externa Open Food Facts
+
+La aplicación utiliza la API externa Open Food Facts para buscar información de productos mediante su código de barras.
+
+La búsqueda se realiza desde la pantalla **Agregar producto**.
+
+Como prueba se puede utilizar el siguiente código:
+
+```text
+3017620422003
+```
+
+Este código corresponde a Nutella y permite completar automáticamente el nombre del producto.
+
+La aplicación también controla:
+
+- Código de barras inválido.
+- Producto no encontrado.
+- Falta de conexión a Internet.
+- Producto sin nombre.
+
+La API externa utilizada es:
+
+```text
+https://world.openfoodfacts.org
+```
+
+## Pruebas unitarias Android
+
+Para ejecutar las pruebas unitarias Android:
 
 ```powershell
 .\gradlew.bat testDebugUnitTest
 ```
 
-| Prueba | Qué revisa |
-|---|---|
-| `ProductoExternoRepositoryTest` | Búsqueda en Open Food Facts con una API falsa: producto encontrado, no encontrado, código inválido, producto sin nombre y sin internet |
-| `ValidacionesLoginTest` | Validaciones del correo y la contraseña del inicio de sesión |
+Las pruebas verifican principalmente:
 
-## APK firmado
+- Validaciones del inicio de sesión.
+- Validación de códigos de barras.
+- Búsqueda de productos en Open Food Facts.
+- Producto encontrado.
+- Producto no encontrado.
+- Código inválido.
+- Producto sin nombre.
+- Error por falta de conexión.
 
-El APK de release se firma con el keystore `keystore/kaiju-release.jks` (alias `kaiju`, RSA 2048, validez 10.000 días).
-Las contraseñas **no están en el repositorio**: se leen del archivo `keystore.properties`, que está en `.gitignore`.
+El resultado esperado es:
 
-1. Copiar `keystore.properties.example` como `keystore.properties` y completar las contraseñas.
-2. Generar el APK:
+```text
+BUILD SUCCESSFUL
+```
+
+## Pruebas del backend
+
+Desde la carpeta de cada microservicio se pueden ejecutar sus pruebas con:
+
+```powershell
+.\mvnw.cmd test
+```
+
+Ejemplo:
+
+```powershell
+cd ms-productos
+.\mvnw.cmd test
+```
+
+También se debe ejecutar para:
+
+```text
+ms-usuarios
+ms-movimientos
+```
+
+## APK firmado de release
+
+La aplicación cuenta con una configuración para generar un APK firmado en modo release.
+
+El archivo de configuración privado es:
+
+```text
+keystore.properties
+```
+
+Ese archivo contiene las contraseñas de firma y no se sube al repositorio.
+
+La plantilla disponible en el proyecto es:
+
+```text
+keystore.properties.example
+```
+
+Para generar el APK release:
 
 ```powershell
 .\gradlew.bat assembleRelease
 ```
 
-3. El APK queda en `app/build/outputs/apk/release/app-release.apk`.
-4. Para verificar la firma: `apksigner verify --verbose app-release.apk` (debe indicar `Verified using v2 scheme: true`).
+El APK generado queda en:
 
-La configuración de la firma está en `app/build.gradle.kts`, dentro de `signingConfigs`.
+```text
+app/build/outputs/apk/release/app-release.apk
+```
+
+El APK release puede instalarse en un emulador o en un teléfono Android.
+
+Para instalarlo mediante ADB:
+
+```powershell
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r ".\app\build\outputs\apk\release\app-release.apk"
+```
+
+## Archivos privados
+
+Por seguridad, los siguientes archivos no deben subirse a GitHub:
+
+```text
+keystore.properties
+keystore/*.jks
+```
+
+El archivo que sí se puede mantener en el repositorio es:
+
+```text
+keystore.properties.example
+```
+
+Este archivo solo contiene la estructura de configuración y no contiene las contraseñas reales.
+
+## Estructura principal del proyecto
+
+```text
+app/src/main/java/com/duoc/kaijuinventory/
+
+├── data
+│   ├── local
+│   │   ├── Entidades Room
+│   │   ├── DAO
+│   │   └── Base de datos
+│   └── remote
+│       ├── APIs Retrofit
+│       ├── DTOs
+│       └── Configuración de clientes
+├── model
+├── navigation
+├── repository
+├── ui
+│   ├── components
+│   ├── screens
+│   └── theme
+├── util
+└── viewmodel
+```
+
+## Estado del proyecto
+
+La aplicación fue probada en:
+
+- Login.
+- Inventario.
+- Agregar productos.
+- Validaciones de formularios.
+- Búsqueda en Open Food Facts.
+- Registro de ventas.
+- Bloqueo de ventas superiores al stock.
+- Actualización del stock.
+- Notificaciones de stock bajo.
+- Persistencia al cerrar y abrir la aplicación.
+- Conexión con los tres microservicios.
+- APK release firmado instalado en un dispositivo Android.
