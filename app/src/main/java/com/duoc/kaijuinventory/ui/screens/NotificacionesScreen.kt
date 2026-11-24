@@ -31,7 +31,10 @@ import com.duoc.kaijuinventory.util.tienePermisoNotificaciones
 import com.duoc.kaijuinventory.viewmodel.InventoryViewModel
 
 @Composable
-fun NotificacionesScreen(viewModel: InventoryViewModel) {
+fun NotificacionesScreen(
+    viewModel: InventoryViewModel,
+    onProductoClick: (Int) -> Unit = {}
+) {
     val context = LocalContext.current
     val productos by viewModel.productos.collectAsState()
     var permisoConcedido by remember { mutableStateOf(tienePermisoNotificaciones(context)) }
@@ -155,7 +158,9 @@ fun NotificacionesScreen(viewModel: InventoryViewModel) {
                 val color = if (sinStock) RojoError else ColorAdvertencia
                 val fondo = if (sinStock) RojoErrorSuave else ColorAdvertenciaSuave
 
+                // Al tocar el producto se abre su detalle
                 Card(
+                    onClick = { onProductoClick(producto.id) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {

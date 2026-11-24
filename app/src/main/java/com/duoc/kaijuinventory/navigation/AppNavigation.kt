@@ -33,15 +33,23 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.duoc.kaijuinventory.ui.screens.InventoryScreen
 import com.duoc.kaijuinventory.ui.screens.LoginScreen
+import com.duoc.kaijuinventory.ui.screens.SplashScreen
 import com.duoc.kaijuinventory.viewmodel.LoginViewModel
 import com.duoc.kaijuinventory.ui.screens.MovimientoScreen
 import com.duoc.kaijuinventory.ui.screens.NotificacionesScreen
@@ -65,11 +73,9 @@ fun AppNavigation(viewModel: InventoryViewModel) {
     val sesionCargada by loginViewModel.sesionCargada.collectAsState()
     val usuario by loginViewModel.usuario.collectAsState()
 
-    // Mientras se revisa si hay una sesión guardada, se muestra un indicador de carga
+    // Mientras se revisa si hay una sesión guardada, se muestra la pantalla de bienvenida
     if (!sesionCargada) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        SplashScreen()
         return
     }
 
@@ -88,13 +94,34 @@ fun AppNavigation(viewModel: InventoryViewModel) {
             // En la pantalla de login no se muestran la barra superior ni la inferior
             if (!enLogin) TopAppBar(
                 title = {
-                    Column {
-                        Text(if (enDetalle) "Detalle del producto" else "Kaiju Inventory")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Círculo con las iniciales del usuario (no se muestra en el detalle, donde va la flecha)
                         usuario?.let {
-                            Text(
-                                text = "${it.nombre} · ${it.rolLegible}",
-                                style = MaterialTheme.typography.labelMedium
-                            )
+                            if (!enDetalle) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White.copy(alpha = 0.22f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = it.iniciales,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                            }
+                        }
+                        Column {
+                            Text(if (enDetalle) "Detalle del producto" else "Kaiju Inventory")
+                            usuario?.let {
+                                Text(
+                                    text = "${it.rolLegible} · ${it.email}",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
                         }
                     }
                 },
@@ -182,6 +209,7 @@ fun AppNavigation(viewModel: InventoryViewModel) {
             composable(Screen.Inventario.route) {
                 InventoryScreen(
                     viewModel = viewModel,
+                    nombreUsuario = usuario?.nombre ?: "",
                     onProductoClick = { id -> navController.navigate(Screen.Detalle.crearRuta(id)) }
                 )
             }
@@ -214,7 +242,10 @@ fun AppNavigation(viewModel: InventoryViewModel) {
                 MovimientoScreen(inventoryViewModel = viewModel)
             }
             composable(Screen.Alertas.route) {
-                NotificacionesScreen(viewModel = viewModel)
+                NotificacionesScreen(
+                    viewModel = viewModel,
+                    onProductoClick = { id -> navController.navigate(Screen.Detalle.crearRuta(id)) }
+                )
             }
         }
     }

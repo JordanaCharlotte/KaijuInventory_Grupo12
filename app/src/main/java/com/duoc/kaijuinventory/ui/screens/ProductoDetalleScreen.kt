@@ -128,16 +128,20 @@ fun ProductoDetalleScreen(
                 colors = CardDefaults.cardColors(containerColor = fondoEstado)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.Bottom) {
+                    // El número y el texto se alinean por la línea base de la letra
+                    Row {
                         Text(
                             text = producto.stock.toString(),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = colorEstado
+                            color = colorEstado,
+                            modifier = Modifier.alignByBaseline()
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "  unidades disponibles",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colorEstado
+                            text = if (producto.stock == 1) "unidad disponible" else "unidades disponibles",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = colorEstado,
+                            modifier = Modifier.alignByBaseline()
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))

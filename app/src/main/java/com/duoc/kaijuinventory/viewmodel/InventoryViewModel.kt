@@ -35,6 +35,10 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
     private val _sinConexion = MutableStateFlow(false)
     val sinConexion: StateFlow<Boolean> = _sinConexion.asStateFlow()
 
+    // true mientras se actualiza al deslizar hacia abajo
+    private val _actualizando = MutableStateFlow(false)
+    val actualizando: StateFlow<Boolean> = _actualizando.asStateFlow()
+
     private val _mensajeConexion = MutableStateFlow("")
     val mensajeConexion: StateFlow<String> = _mensajeConexion.asStateFlow()
 
@@ -42,21 +46,35 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
         cargarDatos()
     }
 
-    // Trae productos y movimientos desde los microservicios
+    // Carga inicial (o botón Reintentar): muestra el indicador de carga de pantalla completa
     fun cargarDatos() {
         viewModelScope.launch {
             _cargando.value = true
-            try {
-                _productos.value = repository.obtenerProductosRemotos()
-                _movimientos.value = repository.obtenerMovimientosRemotos()
-                _sinConexion.value = false
-                repository.guardarCopiaLocal(_productos.value, _movimientos.value)
-            } catch (e: IOException) {
-                usarCopiaLocal(e)
-            } catch (e: HttpException) {
-                usarCopiaLocal(e)
-            }
+            traerDatosDelServidor()
             _cargando.value = false
+        }
+    }
+
+    // Al deslizar hacia abajo en el inventario: la lista se mantiene y arriba gira un indicador
+    fun actualizar() {
+        viewModelScope.launch {
+            _actualizando.value = true
+            traerDatosDelServidor()
+            _actualizando.value = false
+        }
+    }
+
+    // Trae productos y movimientos desde los microservicios
+    private suspend fun traerDatosDelServidor() {
+        try {
+            _productos.value = repository.obtenerProductosRemotos()
+            _movimientos.value = repository.obtenerMovimientosRemotos()
+            _sinConexion.value = false
+            repository.guardarCopiaLocal(_productos.value, _movimientos.value)
+        } catch (e: IOException) {
+            usarCopiaLocal(e)
+        } catch (e: HttpException) {
+            usarCopiaLocal(e)
         }
     }
 

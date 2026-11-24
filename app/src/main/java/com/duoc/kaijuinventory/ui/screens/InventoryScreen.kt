@@ -11,15 +11,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.duoc.kaijuinventory.model.Producto
 import com.duoc.kaijuinventory.ui.components.ImagenInteligente
@@ -34,15 +37,18 @@ import com.duoc.kaijuinventory.util.normalizarTexto
 import com.duoc.kaijuinventory.viewmodel.InventoryViewModel
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InventoryScreen(
     viewModel: InventoryViewModel,
+    nombreUsuario: String = "",
     onProductoClick: (Int) -> Unit = {}
 ) {
     val productos by viewModel.productos.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
     val sinConexion by viewModel.sinConexion.collectAsState()
     val mensajeConexion by viewModel.mensajeConexion.collectAsState()
+    val actualizando by viewModel.actualizando.collectAsState()
 
     var busqueda by remember { mutableStateOf("") }
     var categoriaElegida by remember { mutableStateOf("Todas") }
@@ -77,6 +83,12 @@ fun InventoryScreen(
             val cantidadSinStock = productos.count { it.stock == 0 }
             val cantidadStockBajo = productos.count { it.stock > 0 && it.stock <= it.stockMinimo }
 
+            // Deslizar hacia abajo vuelve a pedir los datos a los microservicios
+            PullToRefreshBox(
+                isRefreshing = actualizando,
+                onRefresh = { viewModel.actualizar() },
+                modifier = Modifier.fillMaxSize()
+            ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
@@ -84,6 +96,14 @@ fun InventoryScreen(
             ) {
                 item {
                     Column {
+                        // Saludo con el primer nombre del usuario que inició sesión
+                        if (nombreUsuario.isNotBlank()) {
+                            Text(
+                                text = "Hola, ${nombreUsuario.split(" ").first()}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         Text(text = "Inventario", style = MaterialTheme.typography.headlineSmall)
                         Text(
                             text = "${productos.size} productos registrados",
@@ -126,6 +146,7 @@ fun InventoryScreen(
                     ) {
                         TarjetaResumen(
                             titulo = "Disponibles",
+                            icono = Icons.Default.CheckCircle,
                             valor = productos.size - cantidadSinStock - cantidadStockBajo,
                             color = ColorExito,
                             fondo = ColorExitoSuave,
@@ -133,6 +154,7 @@ fun InventoryScreen(
                         )
                         TarjetaResumen(
                             titulo = "Stock bajo",
+                            icono = Icons.Default.Warning,
                             valor = cantidadStockBajo,
                             color = ColorAdvertencia,
                             fondo = ColorAdvertenciaSuave,
@@ -140,6 +162,7 @@ fun InventoryScreen(
                         )
                         TarjetaResumen(
                             titulo = "Sin stock",
+                            icono = Icons.Default.Close,
                             valor = cantidadSinStock,
                             color = RojoError,
                             fondo = RojoErrorSuave,
@@ -212,6 +235,7 @@ fun InventoryScreen(
                     }
                 }
             }
+            }
         }
     }
 }
@@ -219,6 +243,7 @@ fun InventoryScreen(
 @Composable
 private fun TarjetaResumen(
     titulo: String,
+    icono: ImageVector,
     valor: Int,
     color: Color,
     fondo: Color,
@@ -229,11 +254,15 @@ private fun TarjetaResumen(
         colors = CardDefaults.cardColors(containerColor = fondo)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = valor.toString(),
-                style = MaterialTheme.typography.headlineSmall,
-                color = color
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(icono, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = valor.toString(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = color
+                )
+            }
             Text(
                 text = titulo,
                 style = MaterialTheme.typography.labelMedium,
