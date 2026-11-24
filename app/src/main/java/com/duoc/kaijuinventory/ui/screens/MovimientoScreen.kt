@@ -52,6 +52,8 @@ fun MovimientoScreen(
 
     var menuAbierto by remember { mutableStateOf(false) }
     var mostrarExito by remember { mutableStateOf(false) }
+    var enviando by remember { mutableStateOf(false) }
+    var errorServidor by remember { mutableStateOf<String?>(null) }
 
     val productoSeleccionado = productos.find { it.id == formState.productoId }
 
@@ -190,11 +192,17 @@ fun MovimientoScreen(
 
                     Button(
                         onClick = {
-                            val registrado = formViewModel.registrar(productos) { id, tipo, cantidad ->
-                                inventoryViewModel.registrarMovimiento(id, tipo, cantidad)
+                            errorServidor = null
+                            formViewModel.registrar(productos) { id, tipo, cantidad ->
+                                // Se envía a ms-movimientos; la respuesta llega después
+                                enviando = true
+                                inventoryViewModel.registrarMovimiento(id, tipo, cantidad) { error ->
+                                    enviando = false
+                                    if (error == null) mostrarExito = true else errorServidor = error
+                                }
                             }
-                            if (registrado) mostrarExito = true
                         },
+                        enabled = !enviando,
                         colors = ButtonDefaults.buttonColors(containerColor = colorBoton),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -202,7 +210,16 @@ fun MovimientoScreen(
                     ) {
                         Icon(Icons.Default.Check, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Registrar ${formState.tipo.etiqueta.lowercase()}")
+                        Text(if (enviando) "Enviando..." else "Registrar ${formState.tipo.etiqueta.lowercase()}")
+                    }
+
+                    // Error que devuelve el servidor (por ejemplo, sin conexión)
+                    errorServidor?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
 
                     // Mensaje de éxito animado

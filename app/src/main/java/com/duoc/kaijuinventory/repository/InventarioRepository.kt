@@ -4,16 +4,73 @@ import com.duoc.kaijuinventory.data.local.KaijuDatabase
 import com.duoc.kaijuinventory.data.local.toEntity
 import com.duoc.kaijuinventory.data.local.toMovimiento
 import com.duoc.kaijuinventory.data.local.toProducto
+import com.duoc.kaijuinventory.data.remote.BackendCliente
+import com.duoc.kaijuinventory.data.remote.MovimientoDto
+import com.duoc.kaijuinventory.data.remote.MovimientoRequestDto
+import com.duoc.kaijuinventory.data.remote.MovimientosApi
+import com.duoc.kaijuinventory.data.remote.ProductoDto
+import com.duoc.kaijuinventory.data.remote.ProductosApi
 import com.duoc.kaijuinventory.model.Movimiento
 import com.duoc.kaijuinventory.model.Producto
+import com.duoc.kaijuinventory.model.TipoMovimiento
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class InventarioRepository(
-    private val database: KaijuDatabase
+    private val database: KaijuDatabase,
+    private val productosApi: ProductosApi = BackendCliente.productosApi,
+    private val movimientosApi: MovimientosApi = BackendCliente.movimientosApi
 ) {
     private val productoDao = database.productoDao()
     private val movimientoDao = database.movimientoDao()
 
-    suspend fun obtenerProductos(): List<Producto> {
+    // ---------- Backend remoto ----------
+
+    suspend fun obtenerProductosRemotos(): List<Producto> {
+        val fotosLocales = obtenerProductosLocales()
+            .associate { producto -> producto.id to producto.fotoPath }
+
+        return productosApi.listar().map { dto ->
+            dto.aProducto(
+                fotoPath = fotosLocales[dto.id?.toInt()] ?: ""
+            )
+        }
+    }
+
+    suspend fun obtenerMovimientosRemotos(): List<Movimiento> {
+        return movimientosApi.listar().map { dto ->
+            dto.aMovimiento()
+        }
+    }
+
+    suspend fun obtenerProductoRemoto(
+        id: Int,
+        fotoPath: String
+    ): Producto {
+        return productosApi.buscar(id.toLong()).aProducto(fotoPath)
+    }
+
+    suspend fun crearProducto(producto: Producto): Producto {
+        return productosApi.crear(producto.aDto()).aProducto(producto.fotoPath)
+    }
+
+    suspend fun registrarMovimiento(
+        productoId: Int,
+        tipo: TipoMovimiento,
+        cantidad: Int
+    ): Movimiento {
+        val solicitud = MovimientoRequestDto(
+            productoId = productoId.toLong(),
+            tipo = tipo.name,
+            cantidad = cantidad
+        )
+
+        return movimientosApi.registrar(solicitud).aMovimiento()
+    }
+
+    // ---------- Room: copia local ----------
+
+    suspend fun obtenerProductosLocales(): List<Producto> {
         val guardados = productoDao.obtenerTodos()
 
         if (guardados.isNotEmpty()) {
@@ -21,27 +78,31 @@ class InventarioRepository(
         }
 
         val iniciales = productosIniciales()
-        productoDao.guardarTodos(iniciales.map { it.toEntity() })
+        productoDao.guardarTodos(
+            iniciales.map { it.toEntity() }
+        )
+
         return iniciales
     }
 
-    suspend fun obtenerMovimientos(): List<Movimiento> {
+    suspend fun obtenerMovimientosLocales(): List<Movimiento> {
         return movimientoDao.obtenerTodos().map {
             it.toMovimiento()
         }
     }
 
-    suspend fun guardarProductos(lista: List<Producto>) {
+    suspend fun guardarCopiaLocal(
+        productos: List<Producto>,
+        movimientos: List<Movimiento>
+    ) {
         productoDao.eliminarTodos()
         productoDao.guardarTodos(
-            lista.map { it.toEntity() }
+            productos.map { it.toEntity() }
         )
-    }
 
-    suspend fun guardarMovimientos(lista: List<Movimiento>) {
         movimientoDao.eliminarTodos()
         movimientoDao.guardarTodos(
-            lista.map { it.toEntity() }
+            movimientos.map { it.toEntity() }
         )
     }
 
@@ -157,4 +218,53 @@ class InventarioRepository(
             )
         )
     }
+}
+
+// ---------- Conversiones ----------
+
+private fun ProductoDto.aProducto(
+    fotoPath: String
+): Producto {
+    return Producto(
+        id = (id ?: 0L).toInt(),
+        nombre = nombre,
+        categoria = categoria,
+        stock = stock,
+        stockMinimo = stockMinimo,
+        precio = precio,
+        codigoBarra = codigoBarra ?: "",
+        fotoPath = fotoPath
+    )
+}
+
+private fun Producto.aDto(): ProductoDto {
+    return ProductoDto(
+        id = null,
+        nombre = nombre,
+        categoria = categoria,
+        precio = precio,
+        stock = stock,
+        stockMinimo = stockMinimo,
+        codigoBarra = codigoBarra.ifBlank { null }
+    )
+}
+
+private fun MovimientoDto.aMovimiento(): Movimiento {
+    val fechaMilisegundos = runCatching {
+        LocalDateTime.parse(fecha)
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+    }.getOrElse {
+        System.currentTimeMillis()
+    }
+
+    return Movimiento(
+        id = id.toInt(),
+        productoId = productoId.toInt(),
+        productoNombre = productoNombre,
+        tipo = TipoMovimiento.valueOf(tipo),
+        cantidad = cantidad,
+        fecha = fechaMilisegundos
+    )
 }
