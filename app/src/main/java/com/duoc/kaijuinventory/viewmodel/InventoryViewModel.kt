@@ -3,7 +3,7 @@ package com.duoc.kaijuinventory.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.duoc.kaijuinventory.data.InventarioDataStore
+import com.duoc.kaijuinventory.data.local.KaijuDatabase
 import com.duoc.kaijuinventory.model.Movimiento
 import com.duoc.kaijuinventory.model.Producto
 import com.duoc.kaijuinventory.model.TipoMovimiento
@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// AndroidViewModel porque DataStore necesita el contexto de la aplicación
 class InventoryViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = InventarioRepository(InventarioDataStore(application))
+    private val database = KaijuDatabase.obtenerBaseDeDatos(application)
+    private val repository = InventarioRepository(database)
 
     private val _productos = MutableStateFlow<List<Producto>>(emptyList())
     val productos: StateFlow<List<Producto>> = _productos.asStateFlow()
@@ -43,24 +43,43 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
     fun agregarProducto(producto: Producto) {
         val nuevoId = (_productos.value.maxOfOrNull { it.id } ?: 0) + 1
         val lista = _productos.value + producto.copy(id = nuevoId)
+
         _productos.value = lista
-        viewModelScope.launch { repository.guardarProductos(lista) }
+
+        viewModelScope.launch {
+            repository.guardarProductos(lista)
+        }
     }
 
-    // La validación de campos vive en MovimientoFormViewModel; aquí solo se aplica el cambio
-    fun registrarMovimiento(productoId: Int, tipo: TipoMovimiento, cantidad: Int) {
-        val producto = _productos.value.find { it.id == productoId } ?: return
+    fun registrarMovimiento(
+        productoId: Int,
+        tipo: TipoMovimiento,
+        cantidad: Int
+    ) {
+        val producto = _productos.value.find {
+            it.id == productoId
+        } ?: return
+
         val nuevoStock = if (tipo == TipoMovimiento.ENTRADA) {
             producto.stock + cantidad
         } else {
             producto.stock - cantidad
         }
-        if (nuevoStock < 0) return
+
+        if (nuevoStock < 0) {
+            return
+        }
 
         val productosActualizados = _productos.value.map {
-            if (it.id == productoId) it.copy(stock = nuevoStock) else it
+            if (it.id == productoId) {
+                it.copy(stock = nuevoStock)
+            } else {
+                it
+            }
         }
+
         val nuevoId = (_movimientos.value.maxOfOrNull { it.id } ?: 0) + 1
+
         val movimiento = Movimiento(
             id = nuevoId,
             productoId = productoId,
@@ -69,16 +88,25 @@ class InventoryViewModel(application: Application) : AndroidViewModel(applicatio
             cantidad = cantidad,
             fecha = System.currentTimeMillis()
         )
-        // El más reciente primero
-        val movimientosActualizados = listOf(movimiento) + _movimientos.value
+
+        val movimientosActualizados =
+            listOf(movimiento) + _movimientos.value
 
         _productos.value = productosActualizados
         _movimientos.value = movimientosActualizados
 
-        // Recurso nativo: si el stock queda en el mínimo o bajo él, se avisa con una notificación
-        val actualizado = productosActualizados.first { it.id == productoId }
-        if (tipo != TipoMovimiento.ENTRADA && actualizado.stock <= actualizado.stockMinimo) {
-            notificarStockBajo(getApplication<Application>(), actualizado)
+        val actualizado = productosActualizados.first {
+            it.id == productoId
+        }
+
+        if (
+            tipo != TipoMovimiento.ENTRADA &&
+            actualizado.stock <= actualizado.stockMinimo
+        ) {
+            notificarStockBajo(
+                getApplication<Application>(),
+                actualizado
+            )
         }
 
         viewModelScope.launch {
